@@ -70,8 +70,3 @@ for n in range(0, Nt):
 plot(t,v, 'o')
 xlabel("Time [s]")
 ylabel("Velocity [m/s]")
-
-figure()
-plot(t,z, 'o')
-xlabel("Time [s]")
-ylabel("Position [m]")
