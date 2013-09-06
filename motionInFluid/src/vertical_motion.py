@@ -6,7 +6,6 @@ Created on Fri Aug 23 09:10:51 2013
 """
 from pylab import*
 
-
 "*****************************************************************************"
 class Parameters:
     def set(self, **parameters):
@@ -34,7 +33,54 @@ class Parameters:
         for name in self.prms:
             self.prms[name] = getattr(args, name)
             
-            
+"*****************************************************************************"
+class Integrator(Parameters):
+    def __init__(self):
+        self.prms  = dict(dt=0.1)
+        self.types = dict(dt=float)
+        self.help  = dict(dt='time step')
+    
+"*****************************************************************************"
+class CNQuadratic(Integrator):
+    """
+    Computes u(t_n+1) from u(t_n), by using a Crank-Nicolson scheme
+    for ODE of the type:
+        
+        u'(t) = -a(t)*|u(t)|u(t)+b(t),
+    """ 
+    def __call__(self,u,a,b):
+        dt = self.get("dt")       
+        tmp = (b - u*a*abs(u))/(1+dt*a*abs(u))       
+        uNew = u + dt*tmp
+                
+        return uNew
+
+"*****************************************************************************"       
+class thetaRule(Integrator):
+    """
+    Computes u(t_n+1) from u(t_n) for ODE of the type:
+        
+        u'(t) = -a(t)*u(t)+b(t).
+    
+    theta=1 corresponds to the Backward Euler scheme, theta=0
+    to the Forward Euler scheme, and theta=0.5 to the CrankNicolson
+    """  
+    def __init__(self):
+        Integrator.__init__(self)
+        self.prms.update(dict(theta=0.5))
+        self.types.update(dict(theta=float))
+        self.help.update(dict(theta='time discretization parameter'))
+        
+
+    def __call__(self,u,a,b):
+        dt = self.get("dt")
+        theta = self.get("theta") 
+              
+        uNew = ((1 - dt*(1-theta)*a)*u + \
+        dt*(theta*b + (1-theta)*b))/\
+        (1 + dt*theta*a)
+        
+        return uNew
 "*****************************************************************************"
 class ODESolver(Parameters):
     """
@@ -48,12 +94,11 @@ class ODESolver(Parameters):
     k: step number of the most recently computed solution
     """
     def __init__(self):
-        self.prms  = dict(u0=0.0, dt=0.1, T=10, theta=0.5)
-        self.types = dict(u0=float, dt=float, T=float,theta=float )
+        self.prms  = dict(u0=0.0, dt=0.1, T=10)
+        self.types = dict(u0=float, dt=float, T=float)
         self.help  = dict(u0='initial condition, u(0)',
                           dt='time step',
-                          T='end time of simulation',
-                          theta='time discretization parameter')        
+                          T='end time of simulation')        
     
     def advance(self):
         """Advance solution one time step."""
@@ -81,51 +126,6 @@ class ODESolver(Parameters):
            
        return array(self.u), array(self.t)
        
-   
-
-"*****************************************************************************"
-class Integrator(Parameters):
-    def __init__(self):
-        self.prms  = dict(dt=0.1)
-        self.types = dict(dt=float)
-        self.help  = dict(dt='time step')
-    
-
-"*****************************************************************************"
-class CNQuadratic(Integrator):
-    """
-    Computes u(t_n+1) from u(t_n), by using a Crank-Nicolson scheme
-    for ODE of the type:
-        
-        u'(t) = -a(t)*|u(t)|u(t)+b(t),
-    """ 
-    def __call__(self,u,k,a,b):
-        dt = self.get("dt")       
-        tmp = (b - u*a*abs(u))/(1+dt*a*abs(u))       
-        uNew = u + dt*tmp
-                
-        return uNew
-
-"*****************************************************************************"       
-class thetaRule(Integrator):
-        """
-        Computes u(t_n+1) from u(t_n) for ODE of the type:
-            
-            u'(t) = -a(t)*u(t)+b(t).
-        
-        theta=1 corresponds to the Backward Euler scheme, theta=0
-        to the Forward Euler scheme, and theta=0.5 to the CrankNicolson
-        """  
-        def __call__(self,u,k,a,b):
-            dt = self.get("dt")
-            theta = 0.5
-                  
-            uNew = ((1 - dt*(1-theta)*a)*u + \
-            dt*(theta*b + (1-theta)*b))/\
-            (1 + dt*theta*a)
-            
-            return uNew
-
 "*****************************************************************************"
 class Problem(ODESolver):
     """
@@ -148,8 +148,7 @@ class Problem(ODESolver):
                           mu  ='dynamic viscosity of the fluid',
                           rho ='density of the fluid',
                           Cd  ="drag coefficient" ))
-    
-        print self.help              
+                 
     def advance(self):
         u,k,t = \
         self.u[-1], self.k, self.t[-1]
@@ -158,10 +157,10 @@ class Problem(ODESolver):
         
         if Re < 1: 
             integrator = thetaRule() 
-            return integrator(u,k,self.a(Re,t),self.b(t))
+            return integrator(u,self.a(Re,t),self.b(t))
         else:
             integrator = CNQuadratic() 
-            return integrator(u,k,self.a(Re,t),self.b(t))
+            return integrator(u,self.a(Re,t),self.b(t))
             
     
     def a(self,Re,t):
