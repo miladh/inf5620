@@ -10,14 +10,9 @@ close("all")
 "*****************************************************************************"
 class ODESolver():
     """
-    Superclass for numerical methods solving scalar and vector ODEs
+    Superclass for numerical methods solving scalar ODEs
 
       du/dt = f(u, t)
-
-    Attributes:
-    t: array of time values
-    u: array of solution values (at time points t)
-    k: step number of the most recently computed solution
     """
     def __init__(self,problem, u0, dt, T):  
         self.problem, self.u0, self.dt, self.T = \
@@ -50,30 +45,41 @@ class ODESolver():
        return array(self.u), array(self.t)
        
 "*****************************************************************************"
-class CNQuadratic(ODESolver):
-    """
-    Computes u(t_n+1) from u(t_n), by using a Crank-Nicolson scheme
-    for ODE of the type:
-        
-        u'(t) = -a(t)*|u(t)|u(t)+b(t),
-    """ 
-
-    def advance(self):
-        a, b, u, dt  = self.problem.a(self.t[-1]), self.problem.b(), self.u[-1], self.dt         
-        uNew = (u + dt*b)/(1+dt*a*abs(u))
-                
-        return uNew
-        
-"*****************************************************************************"
 class Problem():
     """
-    Solve
+    Superclass for problems with ODEs of the type
             
-        u'(t) = -a*|u(t)|u(t)+b,
+        u'(t) = f(u, t)  
 
-    with initial condition u(0)=I, for t in the time interval
+    where
+
+        f(u, t) = -a*|u(t)|u(t) + b,
+
+    with initial condition u(0)=u0, for t in the time interval
     (0,T]. The time interval is divided into time steps of
     length dt.
+    """
+                     
+    def a(self,t):        
+        raise NotImplementedError
+      
+    def b(self):     
+        raise NotImplementedError
+
+    def f(self,u,t):
+        raise NotImplementedError 
+        
+    def forces(self,u,t):
+        raise NotImplementedError
+              
+              
+"*****************************************************************************"
+class skydiving(Problem):
+    """
+    Problem:
+        Simulate parachuting- vertical motion of a body subject 
+        to three different types of forces: 
+        the gravity force, the drag force, and the buoyancy force
     """
     def __init__(self, A, m, mu, rho, Cd, tp):
         self.g = 9.81
@@ -92,14 +98,14 @@ class Problem():
         return 0.5*Cd*rho*A/m
 
         
-    def b(self):     
+    def b(self,t):     
         A, m, rho, V, g =  self.A, self.m, self.rho, self.V, self.g
         rhoBody = float(m/V)  
         return -g*(rho/rhoBody - 1)
 
     def f(self,u,t):
         a  = a(t)
-        b  = b() 
+        b  = b(t) 
         
         return -a*u*abs(u) + b
         
@@ -110,6 +116,23 @@ class Problem():
         Fb = rho*g*V
         
         return Fd
+"*****************************************************************************"
+class CNQuadratic(ODESolver):
+    """
+    Computes u(t_n+1) from u(t_n), by using a Crank-Nicolson scheme
+    for ODE of the type:
+        
+        u'(t) = -a(t)*|u(t)|u(t)+b(t),
+    """ 
+
+    def advance(self):
+        a, b, u, dt  = \
+          self.problem.a(self.t[-1]), self.problem.b(self.t[-1]), self.u[-1], self.dt         
+        uNew = (u + dt*b)/(1+dt*a*abs(u))
+                
+        return uNew
+        
+
         
         
 "*****************************************************************************"       
@@ -188,16 +211,16 @@ def define_command_line_options(parser=None):
         
     return parser
        
-       
 "*****************************************************************************"
+
 def main():
-    
+        
     # Read input from the command line
     parser = define_command_line_options()
     args = parser.parse_args()
     
     #Set up problem solver, problem and vizualizer
-    problem    = Problem(args.A, args.m, args.mu, args.rho, args.Cd, args.tp)
+    problem    = skydiving(args.A, args.m, args.mu, args.rho, args.Cd, args.tp)
     solver     = CNQuadratic(problem,args.u0, args.dt, args.T)
     viz        = Visualizer(solver)
     
