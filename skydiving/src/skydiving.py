@@ -32,15 +32,16 @@ class ODESolver():
        
        self.u.append(float(self.u0))
        self.t.append(0)
-       self.k = 0
-       tNew = 0
+       self.dt = float(self.dt)            # avoid integer division
+       Nt = int(round(self.T/self.dt))     # no of time intervals
+       self.T = Nt*self.dt                 # adjust T to fit time step dt
        
+       tNew = 0
        while tNew <= self.T:
            uNew = self.advance()
            self.u.append(uNew)
            tNew = self.t[-1] + self.dt
            self.t.append(tNew)
-           self.k += 1
            
        return array(self.u), array(self.t)
        
@@ -50,10 +51,6 @@ class Problem():
     Superclass for problems with ODEs of the type
             
         u'(t) = f(u, t)  
-
-    where
-
-        f(u, t) = -a*|u(t)|u(t) + b,
 
     with initial condition u(0)=u0, for t in the time interval
     (0,T]. The time interval is divided into time steps of
@@ -79,19 +76,33 @@ class skydiving(Problem):
     Problem:
         Simulate parachuting- vertical motion of a body subject 
         to three different types of forces: 
-        the gravity force, the drag force, and the buoyancy force
+        the gravity force, the drag force, and the buoyancy force. 
+        ODE type:
+            
+            u'(t) = f(u, t)  
+
+    where
+
+        f(u, t) = -a(t)*|u(t)|u(t) + b(t),
     """
-    def __init__(self, A, m, mu, rho, Cd, tp):
-        self.g = 9.81
-        self.V = 0.0664
-        self.A, self.m, self.mu, self.rho, self.Cd, self.tp = \
-                                                A, m, mu, rho, Cd, tp
-                     
+    def __init__(self, A, Ap, dt, dtp, m,  rho, Cd, Cdp, tp):
+        self.g  = 9.81
+        self.V  = 0.0664
+        self.A, self.Ap, self.dt, self.dtp = \
+                                            A, Ap, dt, dtp
+        self.m, self.rho, self.Cd, self.Cdp, self.tp = \
+                                                m, rho, Cd,Cdp, tp
+
+        self.dA = (Ap-A)/(dtp/dt)
+                            
     def a(self,t):        
         m, rho, Cd =  self.m, self.rho, self.Cd  
         
         if(t > self.tp):
-            A = 44.0
+            if(t < self.tp + self.dtp):
+                self.A = self.A + self.dA
+            Cd = self.Cdp
+            A = self.A            
         else:
             A = self.A
                             
@@ -110,24 +121,30 @@ class skydiving(Problem):
         return -a*u*abs(u) + b
         
     def forces(self,u,t):
-        A, m, V,g, rho, Cd =  self.A, self.m, self.V,self.g, self.rho, self.Cd  
-        Fg = m * g
-        Fd = 0.5*Cd*rho*A*absolute(u)*u
-        Fb = rho*g*V
+        A, m, V,g, rho, Cd =  self.A, self.m, self.V,self.g, self.rho, self.Cd     
+        Fg = 0 *array(t)+ m*g
+        A = 0.5
         
-        return Fd
+        Fd = 0 *array(t)+ 0.5*Cd*rho*A*absolute(u)*u
+        Fb = 0 *array(t)+ rho*g*V
+        return Fg,Fd,Fb
 "*****************************************************************************"
 class CNQuadratic(ODESolver):
     """
-    Computes u(t_n+1) from u(t_n), by using a Crank-Nicolson scheme
-    for ODE of the type:
+    Computes u(t_n+1) from u(t_n), by using a Crank-Nicolson scheme with 
+    geometeric average approximation,  for ODE of the type:
         
-        u'(t) = -a(t)*|u(t)|u(t)+b(t),
+        u'(t) = -a(t)*|u(t)|u(t)+b(t).
+        
     """ 
 
     def advance(self):
-        a, b, u, dt  = \
-          self.problem.a(self.t[-1]), self.problem.b(self.t[-1]), self.u[-1], self.dt         
+        u, dt  = self.u[-1], self.dt     
+        
+        a = self.problem.a(self.t[-1]+dt*0.5)
+        b = self.problem.b(self.t[-1]+dt*0.5)
+            
+                
         uNew = (u + dt*b)/(1+dt*a*abs(u))
                 
         return uNew
@@ -150,20 +167,30 @@ class Visualizer:
         if plt is None:
             import matplotlib.pyplot as plt
 
-        plt.plot(self.solver.t, self.solver.u, '--o')
+        plt.plot(self.solver.t[::5], self.solver.u[::5], '--o')
 
         plt.xlabel('t')
         plt.ylabel('u')
         xlim(min(self.solver.t),max(self.solver.t))
+        return plt    
         
-        figure()
+    def plotForces(self, plt=None): 
+        """
+        Plot forces
+        """
+        if plt is None:
+            import matplotlib.pyplot as plt
+            
         forces = self.solver.problem.forces(self.solver.u,self.solver.t)
-        plt.plot(self.solver.t, forces, '--o')
 
-        plt.xlabel('t')
-        plt.ylabel('u')
-        xlim(min(self.solver.t),max(self.solver.t))
-        
+      
+        plt.plot(self.solver.t[::5], forces[0][::5], label = "Gravity force")
+        plt.plot(self.solver.t[::5], forces[1][::5], label = "Drag force")
+        plt.plot(self.solver.t[::5], forces[2][::5], label = "Buoyancy force")
+        plt.legend()
+        plt.xlabel('time')
+        plt.ylabel('Force')
+        xlim(min(self.solver.t),max(self.solver.t))      
         return plt        
 
 "*****************************************************************************"
@@ -177,11 +204,11 @@ def define_command_line_options(parser=None):
         help='initial condition, u(0)',metavar='u0')
         
     parser.add_argument(
-        '--dt', '--time_step_value', type=float,default=0.5, 
+        '--dt', '--time_step_value', type=float,default=0.1, 
         help='time step value', metavar='dt')
         
     parser.add_argument(
-        '--T', '--stop_time', type=float, default=35,
+        '--T', '--stop_time', type=float, default=80.0,
         help='end time of simulation', metavar='T')    
         
     parser.add_argument(
@@ -193,20 +220,28 @@ def define_command_line_options(parser=None):
         help='cross-section areal of the body', metavar='A')
         
     parser.add_argument(
-        '--mu', '--viscosity', type=float, default=1.81e-5,
-        help=' dynamic viscosity of the fluid', metavar='mu')
-        
+        '--Ap', '--arealp', type=float, default=44.0,
+        help='cross-section areal when parachute is open', metavar='Ap')
+          
     parser.add_argument(
         '--rho', '--density', type=float, default=1.0,
         help=' density of the fluid ', metavar='rho')    
         
     parser.add_argument(
         '--Cd', '--dragCoff', type=float, default=1.2,
-        help=' dimensionless drag coefficient', metavar='Cd')
+        help='drag coefficient', metavar='Cd')
         
     parser.add_argument(
-        '--tp', '--parachuteOpens', type=float, default=20.0,
+        '--Cdp', '--dragCoffp', type=float, default=1.8,
+        help='drag coefficient, when parachute is open', metavar='Cdp')
+        
+    parser.add_argument(
+        '--tp', '--parachuteOpens', type=float, default=60.0,
         help='the time where the parachute opens', metavar='tp')
+        
+    parser.add_argument(
+        '--dtp', '--time_to_open_parachute', type=float, default=5.0,
+        help='Time it takes to open the parachute', metavar='dtp')
         
         
     return parser
@@ -220,7 +255,8 @@ def main():
     args = parser.parse_args()
     
     #Set up problem solver, problem and vizualizer
-    problem    = skydiving(args.A, args.m, args.mu, args.rho, args.Cd, args.tp)
+    problem    = skydiving(args.A,args.Ap,args.dt,args.dtp,
+                           args.m, args.rho, args.Cd,args.Cdp, args.tp)
     solver     = CNQuadratic(problem,args.u0, args.dt, args.T)
     viz        = Visualizer(solver)
     
@@ -228,6 +264,10 @@ def main():
     u,t = solver.solve()  
     plt = viz.plot()
     plt.show()
+    figure()
+    pltforce = viz.plotForces()
+    pltforce.show()
+    
     
 "*****************************************************************************"
 
