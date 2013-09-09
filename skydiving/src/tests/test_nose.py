@@ -78,7 +78,7 @@ def test_convergenceRate():
             return b
             
             
-    u0 = 0.1; c = -0.5; T = 40
+    u0 = 0.1; c = -0.5; T = 4
     dtValues = array([0.5, 0.25, 0.1, 0.05, 0.025, 0.01])
     EValues  = [] 
     m = len(dtValues)

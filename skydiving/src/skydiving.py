@@ -12,7 +12,7 @@ class ODESolver():
     """
     Superclass for numerical methods solving scalar ODEs
 
-      du/dt = f(u, t)
+      u'(t) = f(u, t)
     """
     def __init__(self,problem, u0, dt, T):  
         self.problem, self.u0, self.dt, self.T = \
@@ -60,7 +60,7 @@ class Problem():
     def a(self,t):        
         raise NotImplementedError
       
-    def b(self):     
+    def b(self,t):     
         raise NotImplementedError
 
     def f(self,u,t):
@@ -93,39 +93,38 @@ class skydiving(Problem):
         self.m, self.rho, self.Cd, self.Cdp, self.tp = \
                                                 m, rho, Cd,Cdp, tp
 
-        self.dA = (Ap-A)/(dtp/dt)
-                            
-    def a(self,t):        
-        m, rho, Cd =  self.m, self.rho, self.Cd  
+                                                     
+    def arealAndDragCoff(self,t):
+
+        tdiff = array(t) - self.tp
+        tdiff = maximum(0,tdiff)
+        tdiff = minimum(self.dtp,tdiff)
+        tRatio = tdiff/self.dtp
         
-        if(t > self.tp):
-            if(t < self.tp + self.dtp):
-                self.A = self.A + self.dA
-            Cd = self.Cdp
-            A = self.A            
-        else:
-            A = self.A
-                            
+        A  = tRatio * self.Ap + (1 - tRatio) * self.A
+        Cd = tRatio * self.Cdp + (1-tRatio) * self.Cd 
+        return A,Cd
+        
+    
+    def a(self,t):        
+        m, rho =  self.m, self.rho 
+        A, Cd = self.arealAndDragCoff(t)
         return 0.5*Cd*rho*A/m
 
         
     def b(self,t):     
-        A, m, rho, V, g =  self.A, self.m, self.rho, self.V, self.g
+        m, rho, V, g =  self.m, self.rho, self.V, self.g
         rhoBody = float(m/V)  
         return -g*(rho/rhoBody - 1)
-
-    def f(self,u,t):
-        a  = a(t)
-        b  = b(t) 
         
-        return -a*u*abs(u) + b
         
     def forces(self,u,t):
-        A, m, V,g, rho, Cd =  self.A, self.m, self.V,self.g, self.rho, self.Cd     
+        m, V,g, rho = self.m, self.V,self.g, self.rho
+        A, Cd = self.arealAndDragCoff(t)
+
         Fg = 0 *array(t)+ m*g
-        A = 0.5
         
-        Fd = 0 *array(t)+ 0.5*Cd*rho*A*absolute(u)*u
+        Fd = 0 *array(t)- 0.5*Cd*rho*A*absolute(u)*u
         Fb = 0 *array(t)+ rho*g*V
         return Fg,Fd,Fb
 "*****************************************************************************"
@@ -149,29 +148,31 @@ class CNQuadratic(ODESolver):
                 
         return uNew
         
-
-        
-        
 "*****************************************************************************"       
 class Visualizer:
-    def __init__(self, solver):
+    def __init__(self, solver,saveplot):
         self.solver = solver
+        self.saveplot = saveplot
 
     def plot(self, plt=None):
         """
-        Add solver.u curve to the plotting object plt,
-        and include the exact solution if include_exact is True.
+        Add solver.u curve to the plotting object plt.
         This plot function can be called several times (if
         the solver object has computed new solutions).
         """
         if plt is None:
             import matplotlib.pyplot as plt
 
-        plt.plot(self.solver.t[::5], self.solver.u[::5], '--o')
+        plt.plot(self.solver.t[::10], self.solver.u[::10], '--o')
 
         plt.xlabel('t')
         plt.ylabel('u')
         xlim(min(self.solver.t),max(self.solver.t))
+        
+        if self.saveplot:
+            savefig("velocity.png")
+                
+        
         return plt    
         
     def plotForces(self, plt=None): 
@@ -187,10 +188,14 @@ class Visualizer:
         plt.plot(self.solver.t[::5], forces[0][::5], label = "Gravity force")
         plt.plot(self.solver.t[::5], forces[1][::5], label = "Drag force")
         plt.plot(self.solver.t[::5], forces[2][::5], label = "Buoyancy force")
-        plt.legend()
+        plt.legend(loc=3)
         plt.xlabel('time')
         plt.ylabel('Force')
-        xlim(min(self.solver.t),max(self.solver.t))      
+        xlim(min(self.solver.t),max(self.solver.t))
+        
+        if self.saveplot:
+            savefig("forces.png")
+            
         return plt        
 
 "*****************************************************************************"
@@ -233,7 +238,7 @@ def define_command_line_options(parser=None):
         
     parser.add_argument(
         '--Cdp', '--dragCoffp', type=float, default=1.8,
-        help='drag coefficient, when parachute is open', metavar='Cdp')
+        help='drag coefficient when parachute is open', metavar='Cdp')
         
     parser.add_argument(
         '--tp', '--parachuteOpens', type=float, default=60.0,
@@ -243,25 +248,38 @@ def define_command_line_options(parser=None):
         '--dtp', '--time_to_open_parachute', type=float, default=5.0,
         help='Time it takes to open the parachute', metavar='dtp')
         
+    parser.add_argument('--saveplot', action='store_true', default=False,
+                        help='save plot or not')
+                        
+    parser.add_argument('--runtests', action='store_true', default=True,
+                        help='run nosetests')
+        
         
     return parser
        
 "*****************************************************************************"
 
 def main():
-        
+            
     # Read input from the command line
     parser = define_command_line_options()
     args = parser.parse_args()
+    
+    # Run nosetests
+    if(args.runtests):
+        import subprocess
+        subprocess.call(["nosetests", "-s"])
     
     #Set up problem solver, problem and vizualizer
     problem    = skydiving(args.A,args.Ap,args.dt,args.dtp,
                            args.m, args.rho, args.Cd,args.Cdp, args.tp)
     solver     = CNQuadratic(problem,args.u0, args.dt, args.T)
-    viz        = Visualizer(solver)
+    viz        = Visualizer(solver,args.saveplot)
     
-    # Solve and plot
+    # Solve
     u,t = solver.solve()  
+    
+    # Make plot
     plt = viz.plot()
     plt.show()
     figure()
