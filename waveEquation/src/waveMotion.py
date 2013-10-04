@@ -5,8 +5,6 @@ Created on Fri Oct  4 11:46:19 2013
 @author: Milad H. Mobarhan
 """
 from pylab import*
-from mpl_toolkits.mplot3d import axes3d
-ion()
 close("all")
     
 "*****************************************************************************"
@@ -48,55 +46,46 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T, user_action=None):
             u_1[i,j] = problem.I(x[i], y[j])    
             
     if user_action is not None:
-        user_action(u_1, x, xv, y, yv, t, 0)
+        user_action(u_1, x, y, t, 0)
         
         
         
     # Special formula for first time step
     n = 0
-    # Can use advance function with adjusted parameters (note: u_2=0)
     u = advance(problem, u, u_1, u_2, x, y, t, n,
-                    dtdx2, dtdy2, dt,step1=True)
+                    dtdx2, dtdy2, dt, step1=True)
 
     if user_action is not None:
-        user_action(problem,u, x, xv, y, yv, t, 1)
+        user_action(u, x, y, t, 1)
 
-    u_2[:,:] = u_1; u_1[:,:] = u    
+    u_2[:,:], u_1[:,:]= u_1, u 
     
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    X, Y = np.meshgrid(x, y)
     for n in It[1:-1]:
-        # use f(x,y,t) function
         u = advance(problem, u, u_1, u_2, x, y, t, n,
                     dtdx2, dtdy2, dt)
-                    
-        # Make a first plot  
-        fig.clf()
-        ax = fig.gca(projection='3d')
-        ax.plot_surface(X, Y, u,rstride=1, cstride=1, cmap=cm.jet,
-                        linewidth=0, antialiased=False)
-#        ax.set_zlim3d(0, 10)              
-        plt.draw()
-        
+                            
         if user_action is not None:
-            if user_action(u, x, xv, y, yv, t, n+1):
+            if user_action(u, x, y,t, n+1):
                 break
 
         u_2[:,:], u_1[:,:] = u_1, u
 
 
-    t1 = time.clock()    
-    return dt, t1-t0
+    cpu_time = t0 - time.clock()    
+    return u, x, y, t, cpu_time
 "*****************************************************************************"
-
-def advance(problem,u, u_1, u_2, x, y, t, n, dtdx2, dtdy2, dt,
-                   step1=False):
+def advance(problem, u, u_1, u_2, x, y, t, n, 
+            dtdx2, dtdy2, dt, step1=False):
                        
     Ix = range(0, u.shape[0]);  
     Iy = range(0, u.shape[1])
     dt2 = dt**2
-             
+    
+    if step1:
+        D1 = 0.0; D2=1.0 
+    else:
+        D1 = 1.0; D2=0.0      
+        
     for i in Ix[1:-1]:
         for j in Iy[1:-1]:
             qij = problem.q(x[i], y[j])
@@ -111,12 +100,12 @@ def advance(problem,u, u_1, u_2, x, y, t, n, dtdx2, dtdy2, dt,
             
             pij = problem.p(x[i], y[j])
             fac = problem.b*dt / (2*pij)
-
-            u[i,j] = 2*u_1[i,j] - u_2[i,j]*(fac-1) + \
-                     dt2/pij *problem.f(x[i], y[j], t[n]) +\
-                     + dtdx2/pij * u_x + dtdy2/pij * u_y
-            if step1:
-                u[i,j] += 2*dt*problem.V(x[i], y[j])*(fac-1)
+            
+            u[i,j] = 2*u_1[i,j]+\
+                 (D1*u_2[i,j] - D2*2*dt*problem.V(x[i], y[j]))*(fac-1) +\
+                 dt2/pij *problem.f(x[i], y[j], t[n]) +\
+                 dtdx2/pij * u_x + dtdy2/pij * u_y
+                     
     if step1:
         u /= ((1+fac)*(2-fac))
     else:
@@ -132,6 +121,46 @@ def advance(problem,u, u_1, u_2, x, y, t, n, dtdx2, dtdy2, dt,
     i = Ix[-1]
     for j in Iy: u[i,j] = 0
     return u
+
+
+"*****************************************************************************"
+def viz(problem, Lx, Ly, Nx, Ny, dt, T, animate=True):
+    """
+    Run solver and visualize u at each time level.
+    """
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import axes3d
+    plt.ion()  # interactive mode on
+    import time;
+
+    def plot_u(u, x, y, t, n):
+        """
+        user_action function for solver.
+        """
+        X, Y = meshgrid(x, y)
+        fig.clf()
+        ax = fig.gca(projection='3d')
+        ax.plot_wireframe(X, Y, u,rstride=1, cstride=1, cmap=cm.jet,
+                        linewidth=0.1, antialiased=False)
+        
+        ax.set_zlim(-0.1,0.1)
+        ax.set_xlabel('$X$', fontsize=15)
+        ax.set_ylabel('$Y$', fontsize=15)
+        ax.set_zlabel('$u(x,y)$', fontsize=15)
+        plt.tight_layout()
+        plt.draw()       
+                 
+        # Let the initial condition stay on the screen for 2
+        # seconds, else insert a pause of 0.2 s between each plot
+        time.sleep(2) if t[n] == 0 else time.sleep(0.0)
+    
+    
+    fig = plt.figure(figsize=(10,8))
+    
+
+    
+    user_action = plot_u if animate else None
+    u, x, t, cpu = solver(problem, Lx, Ly, Nx, Ny, dt, T, user_action)
 
 "*****************************************************************************"
 class Problem():
@@ -171,10 +200,9 @@ class SimpleWave(Problem):
     """
     def __init__(self, b):    
         self.b = b
-
-            
+           
     def I(self,x,y):        
-        return sin(x)*sin(y);
+        return 0.0;
       
     def V(self,x,y):     
         return sin(x)*sin(y);
@@ -187,6 +215,7 @@ class SimpleWave(Problem):
 
     def p(self,x,y):
         return 1.0; 
+        
 "*****************************************************************************"
 def define_command_line_options(parser=None):
     if parser is None:
@@ -195,22 +224,22 @@ def define_command_line_options(parser=None):
 
     parser.add_argument(
         '--Lx', '--upper_boundary_x', type=float, 
-        default=5.0, help='upper boundary in x direction',metavar='Lx')
+        default=1.0, help='upper boundary in x direction',metavar='Lx')
     
     parser.add_argument(
         '--Ly', '--upper_boundary_y', type=float, 
-        default=5.0, help='upper boundary in y direction',metavar='Ly')
+        default=1.0, help='upper boundary in y direction',metavar='Ly')
     
     parser.add_argument(
-        '--Nx', '--num_mesh_cells_x', type=int, default=5.0,
+        '--Nx', '--num_mesh_cells_x', type=int, default=30.0,
         help='total number of mesh cells in the x direction',metavar='Lx')
     
     parser.add_argument(
-        '--Ny', '--num_mesh_cells_y', type=int, default=5.0, 
+        '--Ny', '--num_mesh_cells_y', type=int, default=30.0, 
         help='total number of mesh cells in the y direction',metavar='Ly')   
    
     parser.add_argument(
-        '--dt', '--time_step_value', type=float, default=0.1, 
+        '--dt', '--time_step_value', type=float, default=0.01, 
         help='time step value', metavar='dt')
         
     parser.add_argument(
@@ -239,12 +268,9 @@ def main():
     #Set up problem
     problem = SimpleWave(args.b)
     
-
-    #Run solver
-    dt, time = solver(problem, args.Lx, args.Ly, args.Nx, args.Ny,
-           args.dt, args.T)
-    
-    print "CPU time: ",time
+    #Run solver and visualize u at each time level
+    viz(problem, args.Lx, args.Ly, args.Nx, args.Ny, args.dt, args.T, 
+        animate=True)
     
     # Run nosetests
     if(args.runtests):
