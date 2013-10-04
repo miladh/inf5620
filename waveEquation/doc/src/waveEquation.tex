@@ -1,0 +1,556 @@
+
+
+
+% Header, overrides base
+
+    % Make sure that the sphinx doc style knows who it inherits from.
+    \def\sphinxdocclass{article}
+
+    % Declare the document class
+    \documentclass[letterpaper,10pt,english]{/usr/share/sphinx/texinputs/sphinxhowto}
+
+    % Imports
+    \usepackage[utf8]{inputenc}
+    \DeclareUnicodeCharacter{00A0}{\\nobreakspace}
+    \usepackage[T1]{fontenc}
+    \usepackage{babel}
+    \usepackage{times}
+    \usepackage{import}
+    \usepackage[Bjarne]{/usr/share/sphinx/texinputs/fncychap}
+    \usepackage{longtable}
+    \usepackage{/usr/share/sphinx/texinputs/sphinx}
+    \usepackage{multirow}
+
+    \usepackage{amsmath}
+    \usepackage{amssymb}
+    \usepackage{ucs}
+    \usepackage{enumerate}
+
+    % Used to make the Input/Output rules follow around the contents.
+    \usepackage{needspace}
+
+    % Pygments requirements
+    \usepackage{fancyvrb}
+    \usepackage{color}
+    % ansi colors additions
+    \definecolor{darkgreen}{rgb}{.12,.54,.11}
+    \definecolor{lightgray}{gray}{.95}
+    \definecolor{brown}{rgb}{0.54,0.27,0.07}
+    \definecolor{purple}{rgb}{0.5,0.0,0.5}
+    \definecolor{darkgray}{gray}{0.25}
+    \definecolor{lightred}{rgb}{1.0,0.39,0.28}
+    \definecolor{lightgreen}{rgb}{0.48,0.99,0.0}
+    \definecolor{lightblue}{rgb}{0.53,0.81,0.92}
+    \definecolor{lightpurple}{rgb}{0.87,0.63,0.87}
+    \definecolor{lightcyan}{rgb}{0.5,1.0,0.83}
+
+    % Needed to box output/input
+    \usepackage{tikz}
+        \usetikzlibrary{calc,arrows,shadows}
+    \usepackage[framemethod=tikz]{mdframed}
+
+    \usepackage{alltt}
+
+    % Used to load and display graphics
+    \usepackage{graphicx}
+    \graphicspath{ {figs/} }
+    \usepackage[Export]{adjustbox} % To resize
+
+    % used so that images for notebooks which have spaces in the name can still be included
+    \usepackage{grffile}
+
+
+    % For formatting output while also word wrapping.
+    \usepackage{listings}
+    \lstset{breaklines=true}
+    \lstset{basicstyle=\small\ttfamily}
+    \def\smaller{\fontsize{9.5pt}{9.5pt}\selectfont}
+
+    %Pygments definitions
+    
+\makeatletter
+\def\PY@reset{\let\PY@it=\relax \let\PY@bf=\relax%
+    \let\PY@ul=\relax \let\PY@tc=\relax%
+    \let\PY@bc=\relax \let\PY@ff=\relax}
+\def\PY@tok#1{\csname PY@tok@#1\endcsname}
+\def\PY@toks#1+{\ifx\relax#1\empty\else%
+    \PY@tok{#1}\expandafter\PY@toks\fi}
+\def\PY@do#1{\PY@bc{\PY@tc{\PY@ul{%
+    \PY@it{\PY@bf{\PY@ff{#1}}}}}}}
+\def\PY#1#2{\PY@reset\PY@toks#1+\relax+\PY@do{#2}}
+
+\expandafter\def\csname PY@tok@gd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gu\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.50,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@gt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.27,0.87}{##1}}}
+\expandafter\def\csname PY@tok@gs\endcsname{\let\PY@bf=\textbf}
+\expandafter\def\csname PY@tok@gr\endcsname{\def\PY@tc##1{\textcolor[rgb]{1.00,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@cm\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@vg\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@m\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@go\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.53,0.53}{##1}}}
+\expandafter\def\csname PY@tok@ge\endcsname{\let\PY@it=\textit}
+\expandafter\def\csname PY@tok@vc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@il\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@cs\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.74,0.48,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gh\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@ni\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.60,0.60,0.60}{##1}}}
+\expandafter\def\csname PY@tok@nl\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@no\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@na\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.49,0.56,0.16}{##1}}}
+\expandafter\def\csname PY@tok@nb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@ne\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.82,0.25,0.23}{##1}}}
+\expandafter\def\csname PY@tok@nf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@si\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@s2\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@vi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@nt\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nv\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@s1\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sx\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@bp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@c1\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@kc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@c\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@mf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@err\endcsname{\def\PY@bc##1{\setlength{\fboxsep}{0pt}\fcolorbox[rgb]{1.00,0.00,0.00}{1,1,1}{\strut ##1}}}
+\expandafter\def\csname PY@tok@kd\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@ss\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@sr\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@mo\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@kn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@mi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@gp\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@o\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@kr\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@s\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@kp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@w\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.73,0.73}{##1}}}
+\expandafter\def\csname PY@tok@kt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.69,0.00,0.25}{##1}}}
+\expandafter\def\csname PY@tok@ow\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@sb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@k\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@se\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sd\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+
+\def\PYZbs{\char`\\}
+\def\PYZus{\char`\_}
+\def\PYZob{\char`\{}
+\def\PYZcb{\char`\}}
+\def\PYZca{\char`\^}
+\def\PYZam{\char`\&}
+\def\PYZlt{\char`\<}
+\def\PYZgt{\char`\>}
+\def\PYZsh{\char`\#}
+\def\PYZpc{\char`\%}
+\def\PYZdl{\char`\$}
+\def\PYZhy{\char`\-}
+\def\PYZsq{\char`\'}
+\def\PYZdq{\char`\"}
+\def\PYZti{\char`\~}
+% for compatibility with earlier versions
+\def\PYZat{@}
+\def\PYZlb{[}
+\def\PYZrb{]}
+\makeatother
+
+
+    %Set pygments styles if needed...
+    
+        \definecolor{nbframe-border}{rgb}{0.867,0.867,0.867}
+        \definecolor{nbframe-bg}{rgb}{0.969,0.969,0.969}
+        \definecolor{nbframe-in-prompt}{rgb}{0.0,0.0,0.502}
+        \definecolor{nbframe-out-prompt}{rgb}{0.545,0.0,0.0}
+
+        \newenvironment{ColorVerbatim}
+        {\begin{mdframed}[%
+            roundcorner=1.0pt, %
+            backgroundcolor=nbframe-bg, %
+            userdefinedwidth=1\linewidth, %
+            leftmargin=0.1\linewidth, %
+            innerleftmargin=0pt, %
+            innerrightmargin=0pt, %
+            linecolor=nbframe-border, %
+            linewidth=1pt, %
+            usetwoside=false, %
+            everyline=true, %
+            innerlinewidth=3pt, %
+            innerlinecolor=nbframe-bg, %
+            middlelinewidth=1pt, %
+            middlelinecolor=nbframe-bg, %
+            outerlinewidth=0.5pt, %
+            outerlinecolor=nbframe-border, %
+            needspace=0pt
+        ]}
+        {\end{mdframed}}
+        
+        \newenvironment{InvisibleVerbatim}
+        {\begin{mdframed}[leftmargin=0.1\linewidth,innerleftmargin=3pt,innerrightmargin=3pt, userdefinedwidth=1\linewidth, linewidth=0pt, linecolor=white, usetwoside=false]}
+        {\end{mdframed}}
+
+        \renewenvironment{Verbatim}[1][\unskip]
+        {\begin{alltt}\smaller}
+        {\end{alltt}}
+    
+
+    % Help prevent overflowing lines due to urls and other hard-to-break 
+    % entities.  This doesn't catch everything...
+    \sloppy
+
+    % Document level variables
+    \title{waveEquation}
+    \date{October 04, 2013}
+    \release{}
+    \author{Milad H. Mobarhan \& Svenn-Arne Dragly}
+    \renewcommand{\releasename}{}
+
+    % TODO: Add option for the user to specify a logo for his/her export.
+    \newcommand{\sphinxlogo}{}
+
+    % Make the index page of the document.
+    \makeindex
+
+    % Import sphinx document type specifics.
+     
+
+
+% Body
+
+    % Start of the document
+    \begin{document}
+
+        
+            \maketitle
+        
+
+        
+
+
+        
+        \section{Project 2: 2D wave equation}
+
+\emph{Summary.} The aim of this project is to develop a solver for the
+two-dimensional, standard, linear wave equation, with damping, and
+verify the solver.\begin{center}\rule{3in}{0.4pt}\end{center}
+
+\subsection{Mathematical problem}
+
+The general wave equation in $d$ space dimensions, with variable
+coefficients, can be written in the compact form
+
+\[
+\varrho\frac{\partial^2 u}{\partial t^2} +b \frac{\partial u}{\partial t} = \nabla\cdot (q\nabla u) + f\hbox{ for }\boldsymbol{x}\in\Omega\subset\mathbb{R}^d,\ t\in (0,T],
+\]
+
+which in 2D becomes
+
+\[
+\varrho(x,y)
+\frac{\partial^2 u}{\partial t^2} +b \frac{\partial u}{\partial t} =
+\frac{\partial}{\partial x}\left( q(x,y)
+\frac{\partial u}{\partial x}\right)
++
+\frac{\partial}{\partial y}\left( q(x,y)
+\frac{\partial u}{\partial y}\right)
++ f(x,y,t)
+\thinspace .
+\] To save some writing and space we may use the index notation, where
+subscript $t$, $x$ or $y$ means differentiation with respect to that
+coordinate, i.e.
+
+\begin{align*}
+u_{t} &=\frac{\partial u}{\partial t} ,
+\quad u_{tt} =\frac{\partial^2 u}{\partial t^2}\\
+u_{x} &=\frac{\partial u}{\partial x} ,
+\quad u_{xx} =\frac{\partial^2 u}{\partial x^2}\\
+u_{y} &=\frac{\partial u}{\partial t} ,
+\quad u_{yy} =\frac{\partial^2 u}{\partial y^2}\\
+(q u_x)_x &= \frac{\partial}{\partial x}\left( q(x,y)
+\frac{\partial u}{\partial x}\right)
+\\
+(q u_y)_y\ &=\frac{\partial}{\partial y}\left( q(x,y)
+\frac{\partial u}{\partial y}\right)
+\thinspace .
+\end{align*}
+
+The 2D versions of the two model PDEs, with and without variable
+coefficients, can with now with the aid of the index notation for
+differentiation be stated as \[
+\varrho u_{tt} + b u_{t}= (q u_x)_x + (q u_z)_z + (q u_z)_z + f
+\] Since this PDE contains a second-order derivative in time, we need
+two initial conditions; (1) the initial shape of the string, $I$, and
+(2) the initial velocity of the string, $V$;
+
+\begin{align*}
+u(x,y,0)&=I(x,y),\\
+u_t(x,y,0)&=V(x,y).
+\end{align*}
+
+In addition, PDEs need boundary conditions, which are of three principal
+types:
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  $u$ is prescribed ($u=0$ or a known time variation for an incoming
+  wave)
+\item
+  $\partial u/\partial n = \boldsymbol{n}\cdot\nabla u$ prescribed (zero
+  for reflecting boundaries)
+\item
+  An open boundary condition (also called radiation condition) is
+  specified to let waves travel undisturbed out of the domain.
+\end{itemize}\begin{center}\rule{3in}{0.4pt}\end{center}
+
+\subsection{Discretization}
+
+In this section we will derive the discrete set of equations to be
+implemented in a program. We will for simplicity assume constant spacing
+between the mesh points. Our mesh points are
+
+\[
+x_i = i\Delta x,\ i=0,\ldots,N_x,\quad \\ 
+y_j = j\Delta y,\ j=0,\ldots,N_y,\quad \\
+t_i = n\Delta t,\ n=0,\ldots,N_t{\thinspace .}
+\] The solution $u(x,y,t)$ is sought at the mesh points. We introduce
+the mesh function $u_{i,j}^n$, which approximates the exact solution at
+the mesh point $(x_i,y_j,t_n)$ for $i=0,\ldots,N_x$, $j=0,\ldots,N_y$
+and $n=0,\ldots,N_t$.\subsubsection{Discretizing the variable coefficient}
+
+The principal idea is to first discretize the outer derivative. We
+define
+
+\[
+\phi^x = q(x,y)
+\frac{\partial u}{\partial x},
+\] and use a centered derivative around $x=x_i$ for the derivative of
+$\phi$:
+
+\[
+\left[\frac{\partial\phi^x}{\partial x}\right]^n_i
+\approx \frac{\phi^x_{i+\frac{1}{2}} - \phi^x_{i-\frac{1}{2}}}{\Delta x}
+= [D_x\phi^x]^n_i
+\thinspace .
+\] Then discretize
+
+\[
+\phi^x_{i+\frac{1}{2}}  = q_{i+\frac{1}{2}}
+\left[\frac{\partial u}{\partial x}\right]^n_{i+\frac{1}{2}}
+\approx q_{i+\frac{1}{2}} \frac{u^n_{i+1} - u^n_{i}}{\Delta x}
+= [q D_x u]_{i+\frac{1}{2}}^n
+\thinspace .
+\] Similarly,
+
+\[
+\phi^x_{i-\frac{1}{2}}  = q_{i-\frac{1}{2}}
+\left[\frac{\partial u}{\partial x}\right]^n_{i-\frac{1}{2}}
+\approx q_{i-\frac{1}{2}} \frac{u^n_{i} - u^n_{i-1}}{\Delta x}
+= [q D_x u]_{i-\frac{1}{2}}^n
+\thinspace .
+\] These intermediate results are now combined to
+
+\[
+\left[
+     \frac{\partial}{\partial x}\left( q
+     \frac{\partial u}{\partial x}\right)\right]^n_i
+     \approx \frac{1}{\Delta x^2}
+     \left( q_{i+\frac{1}{2}} \left({u^n_{i+1} - u^n_{i}}\right)
+     - q_{i-\frac{1}{2}} \left({u^n_{i} - u^n_{i-1}}\right)\right)
+\] With operator notation we can write the discretization as
+
+\[
+\left[
+     \frac{\partial}{\partial x}\left( q
+     \frac{\partial u}{\partial x}\right)\right]^n_i
+     \approx [D_xq D_x u]^n_i
+\]
+
+Similarly we have
+
+\[
+\left[
+     \frac{\partial}{\partial y}\left( q
+     \frac{\partial u}{\partial y}\right)\right]^n_i
+     \approx [D_yq D_y u]^n_i
+\] for \[
+\phi^y = q(x,y)
+\frac{\partial u}{\partial y}.
+\]
+
+In order to compute $[D_xq D_x u]^n_i$ and $[D_yq D_y u]^n_i$ we need to
+evaluate $q_{i\pm\frac{1}{2}}$. If $q$ is a known function, we can
+easily evaluate $q_{i\pm\frac{1}{2}}$ simply as $q(x_{i\pm\frac{1}{2}})$
+with $x_{i+\frac{1}{2}} = x_i + \frac{1}{2}\Delta x$. However, in many
+cases $q$, is only known as a discrete function, and evaluating must be
+done by averaging. The most commonly used averaging technique is the
+arithmetic mean:
+
+\[
+q_{i+\frac{1}{2}} \approx
+     \frac{1}{2}\left(q_{i+1}+ q_{i}\right) =
+     [\overline{q}^{x}]_{i+\frac{1}{2}},\\
+q_{i-\frac{1}{2}} \approx
+     \frac{1}{2}\left(q_{i}+ q_{i-1}\right) =
+     [\overline{q}^{x}]_{i-\frac{1}{2}},  
+\] which we are going to use in the following.\subsubsection{Replacing derivatives by finite differences}
+
+The second-order derivatives can be replaced by central differences. The
+most widely used difference approximation of the second-order derivative
+is
+
+\[
+\frac{\partial^2}{\partial t^2}u(x_i,y_j,t_n)\approx
+\frac{u_{i,j}^{n+1} - 2u_{i,j}^n + u^{n-1}_{i,j}}{\Delta t^2}{\thinspace .}
+\] It is convenient to introduce the finite difference operator notation
+\[
+[D_tD_t u]^n_{i,j} = \frac{u_{i,j}^{n+1} - 2u_{i,j}^n + u^{n-1}_{i,j}}{\Delta t^2}{\thinspace .}
+\]
+
+The first-order derivative in time in the damping term can be
+approximated by
+
+\[
+[D_{2t} u]^n_{i,j} = \frac{u_{i,j}^{n+1} - u^{n-1}_{i,j}}  {2\Delta t}{\thinspace .}
+\]\subsubsection{Algebraic version of the initial conditions}
+
+The initial conditions are given as
+
+\begin{align*}
+u(x,y,t_0)&=I(x,y),\\
+u_t(x,y,t_0)&=V(x,y).
+\end{align*}
+
+The first condition can be computed by \[
+u_i^0 = I(x_i),\quad i=0,\ldots,N_x{\thinspace .}
+\] For the second one we use a centered difference of type \[
+\frac{\partial}{\partial t} u(x_i,y_j,t_0)\approx
+\frac{u^1_{i,j} - u^{-1}_{i,j}}{2\Delta t} = [D_{2t} u]^0_{i,j} = V(x_i,y_j).
+\]\subsubsection{Algebraic version of the PDE}
+
+\paragraph{Interior spatial mesh points}
+
+The PDE with variable coefficients is discretized term by term:
+
+\[
+[\varrho D_tD_t u + b D_{2t} u  = (D_x\overline{q}^x D_x u +
+D_y\overline{q}^y D_yu ) + f]^n_{i,j}
+\thinspace .
+\] When written out and solved for the unknown $u^{n+1}_{i,j}$ one gets
+the scheme
+
+\begin{align*}u^{n+1}_{i,j} &= 
+\Bigg\{
+2u^{n}_{i,j} + u^{n-1}_{i,j}\left[\frac{b \Delta t}{2\varrho_{i,j}} - 1\right]+\frac{\Delta t^2}{\varrho_{i,j}} f^n_{i,j} \\
+&+ \frac{1}{\varrho_{i,j}}\frac{\Delta t^2}{\Delta x^2} 
+\left[ \frac{1}{2}(q_{i,j} + q_{i+1,j})(u^{n}_{i+1,j} - u^{n}_{i,j}) - \frac{1}{2}(q_{i-1,j} + q_{i,j})(u^{n}_{i,j} - u^{n}_{i-1,j})\right] \\
+&+ \frac{1}{\varrho_{i,j}}\frac{\Delta t^2}{\Delta y^2} 
+\left[ \frac{1}{2}(q_{i,j} + q_{i,j+1})(u^{n}_{i,j+1} - u^{n}_{i,j}) -\frac{1}{2}(q_{i,j-1} + q_{i,j})(u^{n}_{i,j} - u^{n}_{i,j-1})\right]
+\Bigg\} \left(\frac{1}{1+ \frac{b\Delta t}{2\varrho_{i,j} }}\right )
+\thinspace .\end{align*}\paragraph{Modified scheme for the first step}
+
+A problem with algebraic version of the PDE equation arises when $n=0$
+since the formula for $u^1_{i,j}$ involves $u^{-1}_{i,j}$, which is an
+undefined quantity outside the time mesh (and the time domain). However,
+we can use the initial condition to arrive at a special formula for
+$u^1_{i,j}$. From initial condition we have
+
+\[
+ u^{-1}_{i,j} =u^1_{i,j} -  2\Delta tV.
+\] Inserting this into the algebraic version of the PDE equation for
+$n=0$ gives:
+
+\begin{align*}u^{1}_{i,j} &= 
+\Bigg\{
+2u^{0}_{i,j} + \left( u^1_{i,j} -  2\Delta tV\right)\left[\frac{b \Delta t}{2\varrho_{i,j}} - 1\right]+\frac{\Delta t^2}{\varrho_{i,j}} f^0_{i,j} \\
+&+ \frac{1}{\varrho_{i,j}}\frac{\Delta t^2}{\Delta x^2} 
+\left[ \frac{1}{2}(q_{i,j} + q_{i+1,j})(u^{0}_{i+1,j} - u^{0}_{i,j}) - \frac{1}{2}(q_{i-1,j} + q_{i,j})(u^{0}_{i,j} - u^{0}_{i-1,j})\right] \\
+&+ \frac{1}{\varrho_{i,j}}\frac{\Delta t^2}{\Delta y^2} 
+\left[ \frac{1}{2}(q_{i,j} + q_{i,j+1})(u^{0}_{i,j+1} - u^{0}_{i,j}) -\frac{1}{2}(q_{i,j-1} + q_{i,j})(u^{0}_{i,j} - u^{0}_{i,j-1})\right]
+\Bigg\} \left(\frac{1}{1+ \frac{b\Delta t}{2\varrho_{i,j} }}\right )
+\thinspace .\end{align*}
+
+Thus, the special formula for $u^1_{i,j}$ is
+
+\begin{align*}
+u^{1}_{i,j} &= 
+\Bigg\{
+2u^{0}_{i,j}  -  2\Delta tV\left[\frac{b \Delta t}{2\varrho_{i,j}} - 1\right]+\frac{\Delta t^2}{\varrho_{i,j}} f^0_{i,j} \\
+&+ \frac{1}{\varrho_{i,j}}\frac{\Delta t^2}{\Delta x^2} 
+\left[ \frac{1}{2}(q_{i,j} + q_{i+1,j})(u^{0}_{i+1,j} - u^{0}_{i,j}) - \frac{1}{2}(q_{i-1,j} + q_{i,j})(u^{0}_{i,j} - u^{0}_{i-1,j})\right] \\
+&+ \frac{1}{\varrho_{i,j}}\frac{\Delta t^2}{\Delta y^2} 
+\left[ \frac{1}{2}(q_{i,j} + q_{i,j+1})(u^{0}_{i,j+1} - u^{0}_{i,j}) -\frac{1}{2}(q_{i,j-1} + q_{i,j})(u^{0}_{i,j} - u^{0}_{i,j-1})\right]
+\Bigg\} \left(\frac{1}{1+ \frac{b\Delta t}{2\varrho_{i,j} }}\right )\left(\frac{1}{2-\frac{b \Delta t}{2\varrho_{i,j}}} \right)
+\thinspace .\end{align*}\begin{center}\rule{3in}{0.4pt}\end{center}
+
+\subsection{Boundary condition}
+
+In a rectangular spatial domain $\Omega = [0,L_x]\times [0,L_y]$, the
+homogeneous Dirichlet condition, is given by
+
+\[
+u_{i,j}^{1} = u_{i,j}^{n+1} = 0 
+\] for $n=1,2,\ldots,N_t-1$, when $i=0, \; i=N_x,\; j \in [0,L_y]$ and
+when $j=0,\; j=N_y,\; i \in [0,L_x]$. Note that $u_{i,j}^{0}$ is given
+by $I$, i.e.
+
+\[
+u_{i,j}^{0} = I(x_i,y_j) \quad \hbox{for   } i=0,\ldots,N_x \quad j=0,\ldots,Ny
+\]
+
+The Neumann boundary condition is given by
+
+\begin{equation}
+ \frac{\partial u}{\partial x}= \frac{\partial u}{\partial y} = 0,
+\end{equation}
+
+at $x = 0, N_x$ and $y = 0, N_y$. Since we have used central differences
+in all the other approximations to derivatives in the scheme, it is
+tempting to implement this condition by the difference
+
+\begin{align*}
+[-D_{2x} u = 0]^n_{0,j},\quad[D_{2x} u = 0]^n_{L_x,j}
+&\Rightarrow\quad u^n_{-1,j}=u^n_{1,j}, \quad u^n_{N_x+1,j}=u^n_{N_x-1,j} \\
+[-D_{2y} u = 0]^n_{i,0},\quad[D_{2y} u = 0]^n_{i,L_y}
+&\Rightarrow\quad u^n_{i,-1}=u^n_{i,1}, \quad u^n_{i,N_y+1}=u^n_{i,N_y-1}
+\thinspace .
+\end{align*}
+
+The problem is that $u^n_{-1,j}$, $u^n_{i,-1}$, $u^n_{N_x+1,j}$ and is
+not a u value that is being computed since the point is outside the
+mesh.
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+
+\end{Verbatim}
+
+            
+                \vspace{0.3\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+        
+
+        \renewcommand{\indexname}{Index}
+        \printindex
+
+    % End of document
+    \end{document}
+
+
