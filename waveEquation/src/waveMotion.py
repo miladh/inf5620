@@ -99,7 +99,7 @@ def advance(problem, u, u_1, u_2, x, y, t, n,
             u_y = qpj*(u_1[i,j+1] - uij) - qmj*(uij - u_1[i,j-1])
             
             pij = problem.p(x[i], y[j])
-            fac = problem.b*dt / (2*pij)
+            fac = problem.b*float(dt) / (2*pij)
             
             u[i,j] = 2*u_1[i,j]+\
                  (D1*u_2[i,j] - D2*2*dt*problem.V(x[i], y[j]))*(fac-1) +\
@@ -205,16 +205,16 @@ class SimpleWave(Problem):
         return 0.0;
       
     def V(self,x,y):     
-        return sin(x)*sin(y);
+        return sin(x)*sin(y)
 
     def f(self,x,y,t):
-        return 0.0;
+        return 0.0
 
     def q(self,x,y):
         return 1.0
 
     def p(self,x,y):
-        return 1.0; 
+        return 1.0
         
 "*****************************************************************************"
 def define_command_line_options(parser=None):
