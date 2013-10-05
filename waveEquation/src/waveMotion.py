@@ -8,7 +8,9 @@ from pylab import*
 close("all")
     
 "*****************************************************************************"
-def solver(problem, Lx, Ly, Nx, Ny, dt, T, user_action=None):
+def solver(problem, Lx, Ly, Nx, Ny, dt, T, 
+           user_action=None, version ='scalar',
+           BC = 'dirichlet'):
     """
     Solve 
     
@@ -16,6 +18,16 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T, user_action=None):
         
     on (0,L_x)x(0,L_y) in time domain (0,T].
     """
+    if version == 'scalar':
+        advance = advance_scalar
+    elif version == 'vectorized': 
+        advance = advance_vectorized
+        
+    if BC == 'dirichlet':
+        BC_type = dirichlet_BC
+    elif BC == 'neumann': 
+        BC_type = neumann_BC
+    
     x = linspace(0, Lx, Nx+1)  # mesh points in x dir
     y = linspace(0, Ly, Ny+1)  # mesh points in y dir
     dx = x[1] - x[0]           # mesh spacing in x dir
@@ -34,6 +46,7 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T, user_action=None):
     u_1 = zeros((Nx+1,Ny+1))   # solution at t-dt
     u_2 = zeros((Nx+1,Ny+1))   # solution at t-2*dt
 
+    print u.shape, u.shape[1]
     Ix = range(0, u.shape[0])
     Iy = range(0, u.shape[1])
     It = range(0, t.shape[0])    
@@ -46,36 +59,74 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T, user_action=None):
             u_1[i,j] = problem.I(x[i], y[j])    
             
     if user_action is not None:
-        user_action(u_1, x, y, t, 0)
-        
+        user_action(u_1, x, y, t[0])
         
         
     # Special formula for first time step
-    n = 0
-    u = advance(problem, u, u_1, u_2, x, y, t, n,
-                    dtdx2, dtdy2, dt, step1=True)
+    u = advance(problem, u, u_1, u_2, x, y, t[0], dtdx2, dtdy2, dt, 
+                step1=True, setBC = BC_type)
 
     if user_action is not None:
-        user_action(u, x, y, t, 1)
+        user_action(u, x, y, t[1])
 
     u_2[:,:], u_1[:,:]= u_1, u 
     
     for n in It[1:-1]:
-        u = advance(problem, u, u_1, u_2, x, y, t, n,
-                    dtdx2, dtdy2, dt)
+        u = advance(problem, u, u_1, u_2, x, y, t[n],
+                    dtdx2, dtdy2, dt, setBC = BC_type)
                             
         if user_action is not None:
-            if user_action(u, x, y,t, n+1):
+            if user_action(u, x, y,t[n+1]):
                 break
 
         u_2[:,:], u_1[:,:] = u_1, u
 
 
-    cpu_time = t0 - time.clock()    
+    cpu_time = t0 - time.clock() 
+    
     return u, x, y, t, cpu_time
 "*****************************************************************************"
-def advance(problem, u, u_1, u_2, x, y, t, n, 
-            dtdx2, dtdy2, dt, step1=False):
+def dirichlet_BC(u,Ix,Iy):
+    """
+    Set Dirichlet boundary conditions
+    """
+    i = Ix[0]       # x=0 boundary
+    for j in Iy: u[i,j] = 0
+
+    i = Ix[-1]     # x=Lx boundary 
+    for j in Iy: u[i,j] = 0
+    
+    j = Iy[0]      # y=0 boundary
+    for i in Ix: u[i,j] = 0
+    
+    j = Iy[-1]    # y=Ly boundary
+    for i in Ix: u[i,j] = 0
+    
+    return u
+    
+"*****************************************************************************"
+def neumann_BC(u,Ix,Iy):
+    """
+    Set Neumann boundary conditions
+    """
+    i = Ix[0]          # x=0 boundary
+    for j in Iy: u[i-1,j] = u[i+1,j]
+    
+    i = Ix[-1]         # x=Lx boundary
+    for j in Iy: u[i+1,j] = u[i-1,j]
+    
+    i = Iy[0]          # y=0 boundary
+    for i in Ix: u[i,j-1] = u[i,j+1]
+    
+    i = Iy[-1]         # y=Ly boundary
+    for i in Ix: u[i,j+1] = u[i,j-1]
+    
+    return u
+    
+"*****************************************************************************"
+
+def advance_scalar(problem, u, u_1, u_2, x, y, t, 
+            dtdx2, dtdy2, dt, step1=False, setBC = dirichlet_BC):
                        
     Ix = range(0, u.shape[0]);  
     Iy = range(0, u.shape[1])
@@ -103,7 +154,7 @@ def advance(problem, u, u_1, u_2, x, y, t, n,
             
             u[i,j] = 2*u_1[i,j]+\
                  (D1*u_2[i,j] - D2*2*dt*problem.V(x[i], y[j]))*(fac-1) +\
-                 dt2/pij *problem.f(x[i], y[j], t[n]) +\
+                 dt2/pij *problem.f(x[i], y[j], t) +\
                  dtdx2/pij * u_x + dtdy2/pij * u_y
                      
     if step1:
@@ -111,17 +162,52 @@ def advance(problem, u, u_1, u_2, x, y, t, n,
     else:
         u /= (1+fac)
     
-    # Boundary condition u=0
-    j = Iy[0]
-    for i in Ix: u[i,j] = 0
-    j = Iy[-1]
-    for i in Ix: u[i,j] = 0
-    i = Ix[0]
-    for j in Iy: u[i,j] = 0
-    i = Ix[-1]
-    for j in Iy: u[i,j] = 0
+    # Set Boundary conditions
+    u = setBC(u,Ix,Iy)   
+    
     return u
+"*****************************************************************************"
+def advance_vectorized(problem, u, u_1, u_2, x, y, t, 
+            dtdx2, dtdy2, dt, step1=False, setBC=None):
+                       
+    Ix = range(0, u.shape[0]);  
+    Iy = range(0, u.shape[1])
+    dt2 = dt**2
+    
+    if step1:
+        D1 = 0.0; D2=1.0 
+    else:
+        D1 = 1.0; D2=0.0      
+        
+    for i in Ix[1:-1]:
+        for j in Iy[1:-1]:
+            qij = problem.q(x[i], y[j])
+            qpi = (problem.q(x[i+1], y[j]) + qij)*0.5
+            qmi = (qij + problem.q(x[i-1], y[j]))*0.5
+            qpj = (problem.q(x[i], y[j+1]) + qij)*0.5
+            qmj = (qij + problem.q(x[i], y[j-1]))*0.5
+                        
+            uij = u_1[i,j]
+            u_x = qpi*(u_1[i+1,j] - uij) - qmi*(uij - u_1[i-1,j])
+            u_y = qpj*(u_1[i,j+1] - uij) - qmj*(uij - u_1[i,j-1])
+            
+            pij = problem.p(x[i], y[j])
+            fac = problem.b*float(dt) / (2*pij)
+            
+            u[i,j] = 2*u_1[i,j]+\
+                 (D1*u_2[i,j] - D2*2*dt*problem.V(x[i], y[j]))*(fac-1) +\
+                 dt2/pij *problem.f(x[i], y[j], t) +\
+                 dtdx2/pij * u_x + dtdy2/pij * u_y
+                     
+    if step1:
+        u /= ((1+fac)*(2-fac))
+    else:
+        u /= (1+fac)
+    
+    # Set Boundary conditions
+    u = setBC(u,Ix,Iy)   
 
+    return u
 
 "*****************************************************************************"
 def viz(problem, Lx, Ly, Nx, Ny, dt, T, animate=True):
@@ -133,7 +219,7 @@ def viz(problem, Lx, Ly, Nx, Ny, dt, T, animate=True):
     plt.ion()  # interactive mode on
     import time;
 
-    def plot_u(u, x, y, t, n):
+    def plot_u(u, x, y, t):
         """
         user_action function for solver.
         """
@@ -152,7 +238,7 @@ def viz(problem, Lx, Ly, Nx, Ny, dt, T, animate=True):
                  
         # Let the initial condition stay on the screen for 2
         # seconds, else insert a pause of 0.2 s between each plot
-        time.sleep(2) if t[n] == 0 else time.sleep(0.0)
+        time.sleep(2) if t == 0 else time.sleep(0.0)
     
     
     fig = plt.figure(figsize=(10,8))
