@@ -1,4 +1,4 @@
 INF5620 
 ======
-First compulsory project: 2D wave equation
+First compulsory project: Parachuting
 
