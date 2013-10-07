@@ -81,7 +81,7 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
            
       
     if user_action is not None:
-        user_action(u_1, x, y, t[0])
+        user_action(u_1[1:-1,1:-1], x[1:-1], y[1:-1], t[0])
         
         
     # Special formula for first time step
@@ -94,7 +94,7 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
         
         
     if user_action is not None:
-        user_action(u, x, y, t[1])
+        user_action(u[1:-1,1:-1], x[1:-1], y[1:-1], t[1])
 
     u_2[:,:], u_1[:,:]= u_1, u 
     
@@ -107,7 +107,7 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
                     hx2, hy2, dt, setBC = BC_type)
                             
         if user_action is not None:
-            if user_action(u, x, y,t[n+1]):
+            if user_action(u[1:-1,1:-1], x[1:-1], y[1:-1],t[n+1]):
                 break
 
         u_2[:,:], u_1[:,:] = u_1, u
@@ -115,7 +115,7 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
 
     cpu_time = time.clock() - t0
     
-    return u, x, y, t, cpu_time
+    return u[1:-1,1:-1], x[1:-1], y[1:-1], t, cpu_time
     
 "*****************************************************************************"
 def neumann_BC(u,Ix,Iy):
@@ -248,10 +248,10 @@ def plot_u(u, x, y, t):
     """
     user_action function for solver.
     """
-    X, Y = meshgrid(x[1:-1], y[1:-1])
+    X, Y = meshgrid(x, y)
     clf()
     ax = gca(projection='3d')
-    ax.plot_wireframe(X, Y, u[1:-1,1:-1],rstride=1, cstride=1, cmap=cm.jet,
+    ax.plot_wireframe(X, Y, u,rstride=1, cstride=1, cmap=cm.jet,
                     linewidth=0.1, antialiased=False)
     
     ax.set_zlim(-0.1,0.1)
@@ -283,7 +283,7 @@ def viz(problem, Lx, Ly, Nx, Ny, dt, T,
 
 #    print "CPU time: ", cpu ,"\n"
     
-    return u[1:-1,1:-1], x[1:-1], y[1:-1], t
+    return u, x, y, t
     
     
 
@@ -330,7 +330,7 @@ class SimpleWave(Problem):
         return 0.0
       
     def V(self,x,y):     
-        return sin(100*x)
+        return sin(10*x)
 
     def f(self,x,y,t):
         return 0.0
@@ -387,7 +387,7 @@ def define_command_line_options(parser=None):
                         help='make animation')
                         
                         
-    parser.add_argument('--runtests', action='store_true', default=False,
+    parser.add_argument('--runtests', action='store_true', default=True,
                         help='run nosetests')
         
         

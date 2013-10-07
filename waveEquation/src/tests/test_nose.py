@@ -117,7 +117,7 @@ def test_standingUndamped():
     b = 0.0; A = 0.05; w=100.0; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
     BC = "neumann"
     version = "vec"
-    animate_ue = False
+    animate_ue = True
     
     
     
