@@ -25,20 +25,16 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
     
     if BC == 'dirichlet':
         BC_type = dirichlet_BC
-#        print "BC: dirichlet "
     elif BC == 'neumann': 
         BC_type = neumann_BC
-#        print "BC: neumann "
     else:
         raise NotImplementedError     
         
     
     if version == 'scalar':
         advance = advance_scalar
-#        print "version: scalar "
     elif version == 'vec': 
         advance = advance_vectorized
-#        print "version: vectorized "
     else:
         raise NotImplementedError 
         
@@ -51,7 +47,8 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
     x = sort(append(x, [-dx, Lx+dx])) # Adding ghost points
     y = sort(append(y, [-dy, Ly+dy])) 
     
-    
+    xv = x[:,newaxis]          # for vectorized function evaluations
+    yv = y[newaxis,:]
     
     Nt = int(round(T/float(dt)))
     t = linspace(0, Nt*dt, Nt+1)    # mesh points in time
@@ -69,22 +66,32 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
     Iy = range(1, u.shape[1]-1)
     It = range(0, t.shape[0])    
     
-    import time; t0 = time.clock()          # for measuring CPU time    
+    t0 = time.clock()          # for measuring CPU time    
     
     # Load initial condition into u_1
-    for i in Ix:
-        for j in Iy: 
-            u_1[i,j] = problem.I(x[i], y[j])  
+    if version == 'scalar':
+        for i in Ix:
+            for j in Iy:
+               u_1[i,j] = problem.I(x[i], y[j])  
+    else: # use vectorized version
+        u_1[:,:] = problem.I(xv, yv)
+    
     # set ghost values
     u_1 = BC_type(u_1, Ix, Iy)
-            
+           
+      
     if user_action is not None:
         user_action(u_1, x, y, t[0])
         
         
     # Special formula for first time step
-    u = advance(problem, u, u_1, u_2, x, y, t[0], hx2, hy2, dt, 
+    if version == 'scalar':
+        u = advance(problem, u, u_1, u_2, x, y, t[0], hx2, hy2, dt, 
                 step1=True, setBC = BC_type)
+    else:
+        u = advance(problem, u, u_1, u_2, xv, yv, t[0], hx2, hy2, dt, 
+                step1=True, setBC = BC_type)
+        
         
     if user_action is not None:
         user_action(u, x, y, t[1])
@@ -92,7 +99,11 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
     u_2[:,:], u_1[:,:]= u_1, u 
     
     for n in It[1:-1]:
-        u = advance(problem, u, u_1, u_2, x, y, t[n],
+        if version == 'scalar':
+            u = advance(problem, u, u_1, u_2, x, y, t[n],
+                    hx2, hy2, dt, setBC = BC_type)
+        else: 
+            u = advance(problem, u, u_1, u_2, xv, yv, t[n],
                     hx2, hy2, dt, setBC = BC_type)
                             
         if user_action is not None:
@@ -365,7 +376,7 @@ def define_command_line_options(parser=None):
         help='damping factor', metavar='b')   
         
     parser.add_argument(
-        '--version', '--version', type=str, default="scalar",
+        '--version', '--version', type=str, default="vec",
         help='scalar or vectorized calculation', metavar='version')   
         
     parser.add_argument(
@@ -376,7 +387,7 @@ def define_command_line_options(parser=None):
                         help='make animation')
                         
                         
-    parser.add_argument('--runtests', action='store_true', default=False,
+    parser.add_argument('--runtests', action='store_true', default=True,
                         help='run nosetests')
         
         
