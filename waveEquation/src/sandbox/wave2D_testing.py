@@ -25,42 +25,55 @@ This function allows the calling code to plot the solution,
 compute errors, etc.
 """
 import time
-from scitools.std import *
+#from scitools.std import *
+from pylab import *
+from mayavi.mlab import *
 
-def solver(I, V, f, c, Lx, Ly, Nx, Ny, dt, T,
+class Problem:    
+    def I(self,x,y):
+        return 0 * x + 0 * y
+    def f(self,x,y,t):
+        return 0 * x + 0 * y + 0 * t
+    def V(self,x,y):
+        return 0 * x + 0 * y
+    def L(self):
+        return (10,10)
+    def N(self):
+        return (40,40)
+    def dt(self):
+        return 0.01
+    def T(self):
+        return 10
+    def c(self):
+        return 1
+    def boundary_condition(self,x,y):
+        return 0 * x + 0 * y
+        
+class GaussianProblem(Problem):
+    def I(self, x,y):
+        Lx,Ly = self.L()
+        return exp(-0.5*(x-Lx/2.0)**2 - 0.5*(y-Ly/2.0)**2)
+    def boundary_condition(self,x,y):
+        return 0 * x + 0 * y
+        
+class PeriodicBoundary(Problem):
+    def I(self, x,y):
+        Lx,Ly = self.L()
+        return cos(x) + sin(y)
+    def boundary_condition(self,x,y):
+        return cos(x) + sin(y)
+
+def solver(problem,
            user_action=None, version='scalar'):
-    if version == 'cython':
-        try:
-            #import pyximport; pyximport.install()
-            import wave2D_u0_loop_cy as compiled_loops
-            advance = compiled_loops.advance
-        except ImportError as e:
-            print 'No module wave2D_u0_loop_cy. Run make_wave2D.sh!'
-            print e
-            sys.exit(1)
-    elif version == 'f77':
-        try:
-            import wave2D_u0_loop_f77 as compiled_loops
-            advance = compiled_loops.advance
-        except ImportError:
-            print 'No module wave2D_u0_loop_f77. Run make_wave2D.sh!'
-            sys.exit(1)
-    elif version == 'c_f2py':
-        try:
-            import wave2D_u0_loop_c_f2py as compiled_loops
-            advance = compiled_loops.advance
-        except ImportError:
-            print 'No module wave2D_u0_loop_c_f2py. Run make_wave2D.sh!'
-            sys.exit(1)
-    elif version == 'c_cy':
-        try:
-            import wave2D_u0_loop_c_cy as compiled_loops
-            advance = compiled_loops.advance_cwrap
-        except ImportError as e:
-            print 'No module wave2D_u0_loop_c_cy. Run make_wave2D.sh!'
-            print e
-            sys.exit(1)
-    elif version == 'vectorized':
+    I = problem.I
+    V = problem.V
+    f = problem.f
+    c = problem.c()
+    Lx, Ly = problem.L()
+    Nx, Ny = problem.N()
+    dt = problem.dt()
+    T = problem.T()
+    if version == 'vectorized':
         advance = advance_vectorized
     elif version == 'scalar':
         advance = advance_scalar
@@ -72,6 +85,8 @@ def solver(I, V, f, c, Lx, Ly, Nx, Ny, dt, T,
 
     xv = x[:,newaxis]          # for vectorized function evaluations
     yv = y[newaxis,:]
+    
+    print "1"
 
     stability_limit = (1/float(c))*(1/sqrt(1/dx**2 + 1/dy**2))
     if dt <= 0:                # max time step?
@@ -92,6 +107,7 @@ def solver(I, V, f, c, Lx, Ly, Nx, Ny, dt, T,
     if V is None or V == 0:
         V = (lambda x, y: 0) if version == 'scalar' else \
             lambda x, y: zeros((x.shape[0], y.shape[1]))
+    print "2"
 
 
     order = 'Fortran' if version == 'f77' else 'C'
@@ -116,31 +132,34 @@ def solver(I, V, f, c, Lx, Ly, Nx, Ny, dt, T,
 
     if user_action is not None:
         user_action(u_1, x, xv, y, yv, t, 0)
+    print "3"
 
     # Special formula for first time step
     n = 0
     # Can use advance function with adjusted parameters (note: u_2=0)
     if version == 'scalar':
-        u = advance(u, u_1, u_2, f, x, y, t, n,
+        u = advance(problem, u, u_1, u_2, f, x, y, t, n,
                     Cx2, Cy2, dt, V, step1=True)
 
     else:  # use vectorized version
         f_a[:,:] = f(xv, yv, t[n])  # precompute, size as u
         V_a = V(xv, yv)
-        u = advance(u, u_1, u_2, f_a, Cx2, Cy2, dt, V_a, step1=True)
+        u = advance(problem, x,y, u, u_1, u_2, f_a, Cx2, Cy2, dt, V_a, step1=True)
 
     if user_action is not None:
         user_action(u, x, xv, y, yv, t, 1)
 
     u_2[:,:] = u_1; u_1[:,:] = u
+    print "33"
 
     for n in It[1:-1]:
+        print "n=", n
         if version == 'scalar':
             # use f(x,y,t) function
-            u = advance(u, u_1, u_2, f, x, y, t, n, Cx2, Cy2, dt)
+            u = advance(problem, u, u_1, u_2, f, x, y, t, n, Cx2, Cy2, dt)
         else:
             f_a[:,:] = f(xv, yv, t[n])  # precompute, size as u
-            u = advance(u, u_1, u_2, f_a, Cx2, Cy2, dt)
+            u = advance(problem, x,y,u, u_1, u_2, f_a, Cx2, Cy2, dt)
 
         if version == 'f77':
             for a in 'u', 'u_1', 'u_2', 'f_a':
@@ -154,12 +173,14 @@ def solver(I, V, f, c, Lx, Ly, Nx, Ny, dt, T,
         u_2[:,:], u_1[:,:] = u_1, u
 
     t1 = time.clock()
+    print "4"
     # dt might be computed in this function so return the value
     return dt, t1 - t0
 
-def advance_scalar(u, u_1, u_2, f, x, y, t, n, Cx2, Cy2, dt,
+def advance_scalar(problem, u, u_1, u_2, f, x, y, t, n, Cx2, Cy2, dt,
                    V=None, step1=False):
-    Ix = range(0, u.shape[0]);  Iy = range(0, u.shape[1])
+    Ix = range(0, u.shape[0])
+    Iy = range(0, u.shape[1])
     dt2 = dt**2
     if step1:
         Cx2 = 0.5*Cx2;  Cy2 = 0.5*Cy2; dt2 = 0.5*dt2
@@ -176,16 +197,20 @@ def advance_scalar(u, u_1, u_2, f, x, y, t, n, Cx2, Cy2, dt,
                 u[i,j] += dt*V(x[i], y[j])
     # Boundary condition u=0
     j = Iy[0]
-    for i in Ix: u[i,j] = 0
+    for i in Ix: 
+        u[i,j] = problem.boundary_condition(x[i], y[j])
     j = Iy[-1]
-    for i in Ix: u[i,j] = 0
+    for i in Ix: 
+        u[i,j] = problem.boundary_condition(x[i], y[j])
     i = Ix[0]
-    for j in Iy: u[i,j] = 0
+    for j in Iy: 
+        u[i,j] = problem.boundary_condition(x[i], y[j])
     i = Ix[-1]
-    for j in Iy: u[i,j] = 0
+    for j in Iy: 
+        u[i,j] = problem.boundary_condition(x[i], y[j])
     return u
 
-def advance_vectorized(u, u_1, u_2, f_a, Cx2, Cy2, dt,
+def advance_vectorized(problem, x,y, u, u_1, u_2, f_a, Cx2, Cy2, dt,
                        V=None, step1=False):
     dt2 = dt**2
     if step1:
@@ -199,15 +224,16 @@ def advance_vectorized(u, u_1, u_2, f_a, Cx2, Cy2, dt,
                    Cx2*u_xx + Cy2*u_yy + dt2*f_a[1:-1,1:-1]
     if step1:
         u[1:-1,1:-1] += dt*V[1:-1, 1:-1]
+        
     # Boundary condition u=0
     j = 0
-    u[:,j] = 0
+    u[:,j] = problem.boundary_condition(x,y[0])
     j = u.shape[1]-1
-    u[:,j] = 0
+    u[:,j] = problem.boundary_condition(x,y[-1])
     i = 0
-    u[i,:] = 0
+    u[i,:] = problem.boundary_condition(x[0],y)
     i = u.shape[0]-1
-    u[i,:] = 0
+    u[i,:] = problem.boundary_condition(x[-1],y)
     return u
 
 import nose.tools as nt
@@ -242,95 +268,50 @@ def test_quadratic(Nx=4, Ny=5):
                          user_action=assert_no_error,
                          version=version)
 
-
-def run_efficiency_tests(nrefinements=4):
-    def I(x, y):
-        return sin(pi*x/Lx)*sin(pi*y/Ly)
-
-    Lx = 10;  Ly = 10
-    c = 1.5
-    T = 100
-    versions = ['scalar', 'vectorized', 'cython', 'f77',
-               'c_f2py', 'c_cy']
-    print ' '*15, ''.join(['%-13s' % v for v in versions])
-    for Nx in 15, 30, 60, 120:
-        cpu = {}
-        for version in versions:
-            dt, cpu_ = solver(I, None, None, c, Lx, Ly, Nx, Nx,
-                              -1, T, user_action=None,
-                              version=version)
-            cpu[version] = cpu_
-        cpu_min = min(list(cpu.values()))
-        if cpu_min < 1E-6:
-            print 'Ignored %dx%d grid (too small execution time)' \
-                  % (Nx, Nx)
-        else:
-            cpu = {version: cpu[version]/cpu_min for version in cpu}
-            print '%-15s' % '%dx%d' % (Nx, Nx),
-            print ''.join(['%13.1f' % cpu[version] for version in versions])
-
-def run_Gaussian(plot_method=2, version='vectorized', save_plot=True):
+def run_problem(problem, version='vectorized', save_plot=True):
+    global isFirst
     """
     Initial Gaussian bell in the middle of the domain.
     plot_method=1 applies mesh function, =2 means surf, =0 means no plot.
     """
+    from glob import glob
     # Clean up plot files
     for name in glob('tmp_*.png'):
         os.remove(name)
 
-    Lx = 10
-    Ly = 10
-    c = 1.0
-
-    def I(x, y):
-        """Gaussian peak at (Lx/2, Ly/2)."""
-        return exp(-0.5*(x-Lx/2.0)**2 - 0.5*(y-Ly/2.0)**2)
-
-    if plot_method == 3:
-        from mpl_toolkits.mplot3d import axes3d
-        import matplotlib.pyplot as plt
-        from matplotlib import cm
-        plt.ion()
-        fig = plt.figure()
-        u_surf = None
+    # Initial dummy plot
+    x = linspace(0,10,100)
+    y = linspace(0,10,100)
+    X,Y = meshgrid(x,y)
+    Z = sin(X) + cos(Y)
+    fig = figure(size=(1024,768))
+    fig.scene.anti_aliasing_frames = 0
+    
+    mySurf = surf(x,y,Z,warp_scale="auto")
+    isFirst = True
 
     def plot_u(u, x, xv, y, yv, t, n):
-        if t[n] == 0:
-            time.sleep(2)
-        if plot_method == 1:
-            mesh(x, y, u, title='t=%g' % t[n], zlim=[-1,1],
-                 caxis=[-1,1])
-        elif plot_method == 2:
-            surfc(xv, yv, u, title='t=%g' % t[n], zlim=[-1, 1],
-                  colorbar=True, colormap=hot(), caxis=[-1,1],
-                  shading='flat')
-        elif plot_method == 3:
-            print 'Experimental 3D matplotlib...under development...'
-            #plt.clf()
-            ax = fig.add_subplot(111, projection='3d')
-            u_surf = ax.plot_surface(xv, yv, u, alpha=0.3)
-            #ax.contourf(xv, yv, u, zdir='z', offset=-100, cmap=cm.coolwarm)
-            #ax.set_zlim(-1, 1)
-            # Remove old surface before drawing
-            if u_surf is not None:
-                ax.collections.remove(u_surf)
-            plt.draw()
-            time.sleep(1)
-        if plot_method > 0:
-            time.sleep(0) # pause between frames
-            if save_plot:
-                filename = 'tmp_%04d.png' % n
-                savefig(filename)  # time consuming!
-
+        fig.scene.disable_render = True
+        global isFirst
+        mySurf.mlab_source.reset(x = x, y = y, scalars = u)
+        if isFirst:
+            fig.scene.reset_zoom()
+        isFirst = False
+        fig.scene.disable_render = False
+        time.sleep(0.02)
+    
     Nx = 40; Ny = 40; T = 20
-    dt, cpu = solver(I, None, None, c, Lx, Ly, Nx, Ny, -1, T,
-                     user_action=plot_u, version=version)
-
+    dt, cpu = solver(problem, user_action=plot_u, version=version)
 
 
 if __name__ == '__main__':
-    import sys
-    from scitools.misc import function_UI
-    cmd = function_UI([test_quadratic, run_efficiency_tests,
-                       run_Gaussian, ], sys.argv)
-    eval(cmd)
+#    import sys
+#    from scitools.misc import function_UI
+#    cmd = function_UI([test_quadratic, run_efficiency_tests,
+#                       run_Gaussian, ], sys.argv)
+#    eval(cmd)
+#    run_Gaussian()
+    problem = PeriodicBoundary()
+    run_problem(problem)
+    #problem = GaussianProblem()
+    #solver(problem)
