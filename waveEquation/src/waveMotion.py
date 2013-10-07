@@ -387,7 +387,7 @@ def define_command_line_options(parser=None):
                         help='make animation')
                         
                         
-    parser.add_argument('--runtests', action='store_true', default=True,
+    parser.add_argument('--runtests', action='store_true', default=False,
                         help='run nosetests')
         
         
