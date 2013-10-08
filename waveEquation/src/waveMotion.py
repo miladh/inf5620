@@ -8,6 +8,7 @@ from pylab import*
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
+import mayavi.mlab as mlab
 plt.ion()  # interactive mode on
 import time;
 close("all")
@@ -25,20 +26,16 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
     
     if BC == 'dirichlet':
         BC_type = dirichlet_BC
-#        print "BC: dirichlet "
     elif BC == 'neumann': 
         BC_type = neumann_BC
-#        print "BC: neumann "
     else:
         raise NotImplementedError     
         
     
     if version == 'scalar':
         advance = advance_scalar
-#        print "version: scalar "
     elif version == 'vec': 
         advance = advance_vectorized
-#        print "version: vectorized "
     else:
         raise NotImplementedError 
         
@@ -51,7 +48,8 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
     x = sort(append(x, [-dx, Lx+dx])) # Adding ghost points
     y = sort(append(y, [-dy, Ly+dy])) 
     
-    
+    xv = x[:,newaxis]          # for vectorized function evaluations
+    yv = y[newaxis,:]
     
     Nt = int(round(T/float(dt)))
     t = linspace(0, Nt*dt, Nt+1)    # mesh points in time
@@ -69,34 +67,48 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
     Iy = range(1, u.shape[1]-1)
     It = range(0, t.shape[0])    
     
-    import time; t0 = time.clock()          # for measuring CPU time    
+    t0 = time.clock()          # for measuring CPU time    
     
     # Load initial condition into u_1
-    for i in Ix:
-        for j in Iy: 
-            u_1[i,j] = problem.I(x[i], y[j])  
+    if version == 'scalar':
+        for i in Ix:
+            for j in Iy:
+               u_1[i,j] = problem.I(x[i], y[j])  
+    else: # use vectorized version
+        u_1[:,:] = problem.I(xv, yv)
+    
     # set ghost values
     u_1 = BC_type(u_1, Ix, Iy)
-            
+           
+      
     if user_action is not None:
-        user_action(u_1, x, y, t[0])
+        user_action(u_1[1:-1,1:-1], x[1:-1], y[1:-1], t[0])
         
         
     # Special formula for first time step
-    u = advance(problem, u, u_1, u_2, x, y, t[0], hx2, hy2, dt, 
+    if version == 'scalar':
+        u = advance(problem, u, u_1, u_2, x, y, t[0], hx2, hy2, dt, 
+                step1=True, setBC = BC_type)
+    else:
+        u = advance(problem, u, u_1, u_2, xv, yv, t[0], hx2, hy2, dt, 
                 step1=True, setBC = BC_type)
         
+        
     if user_action is not None:
-        user_action(u, x, y, t[1])
+        user_action(u[1:-1,1:-1], x[1:-1], y[1:-1], t[1])
 
     u_2[:,:], u_1[:,:]= u_1, u 
     
     for n in It[1:-1]:
-        u = advance(problem, u, u_1, u_2, x, y, t[n],
+        if version == 'scalar':
+            u = advance(problem, u, u_1, u_2, x, y, t[n],
+                    hx2, hy2, dt, setBC = BC_type)
+        else: 
+            u = advance(problem, u, u_1, u_2, xv, yv, t[n],
                     hx2, hy2, dt, setBC = BC_type)
                             
         if user_action is not None:
-            if user_action(u, x, y,t[n+1]):
+            if user_action(u[1:-1,1:-1], x[1:-1], y[1:-1],t[n+1]):
                 break
 
         u_2[:,:], u_1[:,:] = u_1, u
@@ -104,7 +116,7 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
 
     cpu_time = time.clock() - t0
     
-    return u, x, y, t, cpu_time
+    return u[1:-1,1:-1], x[1:-1], y[1:-1], t, cpu_time
     
 "*****************************************************************************"
 def neumann_BC(u,Ix,Iy):
@@ -204,23 +216,23 @@ def advance_vectorized(problem, u, u_1, u_2, x, y, t,
     else:
         D1 = 1.0; D2=0.0      
         
-    qij = problem.q(x[1:-1], y[1:-1])
-    qpi = (problem.q( x[2:], y[1:-1]) + qij)*0.5
-    qmi = (qij + problem.q(x[:-2], y[1:-1]))*0.5
-    qpj = (problem.q( x[1:-1], y[2:]) + qij)*0.5
-    qmj = (qij + problem.q(x[1:-1], y[:-2]))*0.5
+    qij = problem.q(x[1:-1,:], y[:,1:-1])
+    qpi = (problem.q( x[2:,:], y[:,1:-1]) + qij)*0.5
+    qmi = (qij + problem.q(x[:-2,:], y[:,1:-1]))*0.5
+    qpj = (problem.q( x[1:-1,:], y[:,2:]) + qij)*0.5
+    qmj = (qij + problem.q(x[1:-1,:], y[:,:-2]))*0.5
                 
     uij = u_1[1:-1,1:-1] 
     u_x = qpi*(u_1[2:,1:-1] - uij) - qmi*(uij - u_1[:-2,1:-1])
     u_y = qpj*(u_1[1:-1,2:] - uij) - qmj*(uij - u_1[1:-1,:-2])
     
-    pij = problem.p(x[1:-1], y[1:-1])
+    pij = problem.p(x[1:-1,:], y[:,1:-1])
     fac = problem.b*float(dt)/(2*pij)
     
     
     u[1:-1,1:-1] = 2*u_1[1:-1,1:-1]+\
-         (D1*u_2[1:-1,1:-1] - D2*2*dt*problem.V(x[1:-1], y[1:-1]))*\
-         (fac-1) +dt2/pij *problem.f(x[1:-1], y[1:-1], t) +\
+         (D1*u_2[1:-1,1:-1] - D2*2*dt*problem.V(x[1:-1,:], y[:,1:-1]))*\
+         (fac-1) +dt2/pij *problem.f(x[1:-1,:], y[:,1:-1], t) +\
          hx2/pij * u_x + hy2/pij * u_y
                       
     if step1:
@@ -237,10 +249,10 @@ def plot_u(u, x, y, t):
     """
     user_action function for solver.
     """
-    X, Y = meshgrid(x[1:-1], y[1:-1])
+    X, Y = meshgrid(x, y)
     clf()
     ax = gca(projection='3d')
-    ax.plot_wireframe(X, Y, u[1:-1,1:-1],rstride=1, cstride=1, cmap=cm.jet,
+    ax.plot_wireframe(X, Y, u,rstride=1, cstride=1, cmap=cm.jet,
                     linewidth=0.1, antialiased=False)
     
     ax.set_zlim(-0.1,0.1)
@@ -253,6 +265,31 @@ def plot_u(u, x, y, t):
     # Let the initial condition stay on the screen for 2
     # seconds, else insert a pause of 0.2 s between each plot
     time.sleep(2) if t == 0 else time.sleep(0.0)
+"*****************************************************************************"
+
+firstPlot = False
+surfPlot = None
+surfFig = None
+surfAxes = None
+
+def plot_u_mayavi(u, x, y, t):
+    """
+    user_action function for solver.
+    """
+    global surfPlot, surfFig, surfAxes
+    if not surfPlot:
+        surfFig = mlab.figure(size=(1024,768))
+        surfPlot = mlab.surf(x,y,u, warp_scale=1)
+        surfAxes = mlab.axes(extent=[x.min(), x.max(), y.min(), y.max(), -0.5,0.5])
+    else:
+        surfFig.scene.disable_render = True
+        surfPlot.mlab_source.set(x=x, y=y, scalars=u)
+        #surfAxes.extent=[x.min(), x.max(), y.min(), y.max(), -0.1, 0.1]
+        surfFig.scene.reset_zoom()
+        surfFig.scene.disable_render = False
+    if t == 0:
+        time.sleep(0.5)
+    time.sleep(0.02)
     
 
 "*****************************************************************************"
@@ -263,7 +300,7 @@ def viz(problem, Lx, Ly, Nx, Ny, dt, T,
     """
     
     if animate:
-        user_action = plot_u
+        user_action = plot_u_mayavi
     else: 
         user_action =  None
         
@@ -272,7 +309,7 @@ def viz(problem, Lx, Ly, Nx, Ny, dt, T,
 
 #    print "CPU time: ", cpu ,"\n"
     
-    return u[1:-1,1:-1], x[1:-1], y[1:-1], t
+    return u, x, y, t
     
     
 
@@ -315,11 +352,11 @@ class SimpleWave(Problem):
     def __init__(self, b):    
         self.b = b
            
-    def I(self,x,y):        
-        return 0.0
+    def I(self,x,y):  
+        return 0.05*cos(pi*x)*cos(pi*y);
       
-    def V(self,x,y):     
-        return sin(100*x)
+    def V(self,x,y):  
+        return 0.0
 
     def f(self,x,y,t):
         return 0.0
@@ -365,7 +402,7 @@ def define_command_line_options(parser=None):
         help='damping factor', metavar='b')   
         
     parser.add_argument(
-        '--version', '--version', type=str, default="scalar",
+        '--version', '--version', type=str, default="vec",
         help='scalar or vectorized calculation', metavar='version')   
         
     parser.add_argument(
