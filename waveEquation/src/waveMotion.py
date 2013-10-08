@@ -162,7 +162,7 @@ def dirichlet_BC(u,Ix,Iy):
 "*****************************************************************************"
 def advance_scalar(problem, u, u_1, u_2, x, y, t, 
             hx2, hy2, dt, step1=False, setBC = None):
-                       
+                      
     Ix = range(1, u.shape[0]-1)
     Iy = range(1, u.shape[1]-1)
     dt2 = dt**2
@@ -197,7 +197,7 @@ def advance_scalar(problem, u, u_1, u_2, x, y, t,
         u[1:-1,1:-1] /= 2
     else:
         u[1:-1,1:-1] /= (1+fac)
-  
+
     # Set Boundary conditions
     u = setBC(u,Ix,Iy)   
 
@@ -407,11 +407,11 @@ def main():
 
 
     #Set up problem
-    problem = SimpleWave(args.b)
+#    problem = SimpleWave(args.b)
     
     #Run solver and visualize u at each time level
-    viz(problem, args.Lx, args.Ly, args.Nx, args.Ny, args.dt, args.T, 
-        args.version,args.BC, args.animate)
+#    viz(problem, args.Lx, args.Ly, args.Nx, args.Ny, args.dt, args.T, 
+#        args.version,args.BC, args.animate)
     
     
     
