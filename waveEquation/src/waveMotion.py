@@ -215,23 +215,23 @@ def advance_vectorized(problem, u, u_1, u_2, x, y, t,
     else:
         D1 = 1.0; D2=0.0      
         
-    qij = problem.q(x[1:-1], y[1:-1])
-    qpi = (problem.q( x[2:], y[1:-1]) + qij)*0.5
-    qmi = (qij + problem.q(x[:-2], y[1:-1]))*0.5
-    qpj = (problem.q( x[1:-1], y[2:]) + qij)*0.5
-    qmj = (qij + problem.q(x[1:-1], y[:-2]))*0.5
+    qij = problem.q(x[1:-1,:], y[:,1:-1])
+    qpi = (problem.q( x[2:,:], y[:,1:-1]) + qij)*0.5
+    qmi = (qij + problem.q(x[:-2,:], y[:,1:-1]))*0.5
+    qpj = (problem.q( x[1:-1,:], y[:,2:]) + qij)*0.5
+    qmj = (qij + problem.q(x[1:-1,:], y[:,:-2]))*0.5
                 
     uij = u_1[1:-1,1:-1] 
     u_x = qpi*(u_1[2:,1:-1] - uij) - qmi*(uij - u_1[:-2,1:-1])
     u_y = qpj*(u_1[1:-1,2:] - uij) - qmj*(uij - u_1[1:-1,:-2])
     
-    pij = problem.p(x[1:-1], y[1:-1])
+    pij = problem.p(x[1:-1,:], y[:,1:-1])
     fac = problem.b*float(dt)/(2*pij)
     
     
     u[1:-1,1:-1] = 2*u_1[1:-1,1:-1]+\
-         (D1*u_2[1:-1,1:-1] - D2*2*dt*problem.V(x[1:-1], y[1:-1]))*\
-         (fac-1) +dt2/pij *problem.f(x[1:-1], y[1:-1], t) +\
+         (D1*u_2[1:-1,1:-1] - D2*2*dt*problem.V(x[1:-1,:], y[:,1:-1]))*\
+         (fac-1) +dt2/pij *problem.f(x[1:-1,:], y[:,1:-1], t) +\
          hx2/pij * u_x + hy2/pij * u_y
                       
     if step1:
@@ -326,11 +326,11 @@ class SimpleWave(Problem):
     def __init__(self, b):    
         self.b = b
            
-    def I(self,x,y):        
-        return 0.0
+    def I(self,x,y):  
+        return 0.05*cos(pi*x)*cos(pi*y);
       
-    def V(self,x,y):     
-        return sin(10*x)
+    def V(self,x,y):  
+        return 0.0
 
     def f(self,x,y,t):
         return 0.0
