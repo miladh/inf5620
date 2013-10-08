@@ -283,6 +283,7 @@ def plot_u_mayavi(u, x, y, t):
         surfAxes = mlab.axes(extent=[x.min(), x.max(), y.min(), y.max(), -0.5,0.5])
     else:
         surfFig.scene.disable_render = True
+        surfFig.scene.anti_aliasing_frames = 0
         surfPlot.mlab_source.set(x=x, y=y, scalars=u)
         #surfAxes.extent=[x.min(), x.max(), y.min(), y.max(), -0.1, 0.1]
         surfFig.scene.reset_zoom()
