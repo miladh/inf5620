@@ -9,8 +9,8 @@ class TsunamiProblem(wm.Problem):
         self.Ly = Ly
            
     def I(self,x,y):  
-        x0 = self.Lx /2
-        y0 = self.Ly / 2
+        x0 = self.Lx / 4
+        y0 = self.Ly / 3
         I0 = 0
         Ia = 0.5
         Is = 0.1
@@ -48,7 +48,7 @@ class TsunamiProblem(wm.Problem):
     def p(self,x,y):
         return 1.0
 def runTsunamiProblem():
-    dt=0.01; T = 10; Lx=1.0; Ly=1.0; Nx=100; Ny=100
+    dt=0.01; T = 10; Lx=1.0; Ly=1.0; Nx=40; Ny=40
     b=0.0
     BC = "neumann"
     versions = ["vec"] #, "scalar"]
