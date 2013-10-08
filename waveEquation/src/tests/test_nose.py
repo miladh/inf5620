@@ -6,6 +6,7 @@ Created on Fri Oct  4 11:49:56 2013
 """
 import sys
 sys.path.append("..")
+sys.path.append(".")
 
 from pylab import *
 import nose.tools as nt
@@ -58,7 +59,7 @@ def test_constantSolution():
         
         #Run solver and visualize u at each time level
         u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, dt=dt, T=T, 
-                   BC = BC, version=version, animate=False)
+                   BC = BC, version=version, animate=True)
         
         xv = x[:,newaxis]          # for vectorized function evaluations
         yv = y[newaxis,:]
@@ -131,7 +132,7 @@ def test_standingUndamped():
         e_max=.0
         u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, 
                              dt=dt, T=T,BC = BC, version=version, 
-                             animate=False)
+                             animate=True)
                              
         xv = x[:,newaxis]      # for vectorized function evaluations
         yv = y[newaxis,:]

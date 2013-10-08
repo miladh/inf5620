@@ -8,6 +8,7 @@ from pylab import*
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
+import mayavi.mlab as mlab
 plt.ion()  # interactive mode on
 import time;
 close("all")
@@ -264,6 +265,31 @@ def plot_u(u, x, y, t):
     # Let the initial condition stay on the screen for 2
     # seconds, else insert a pause of 0.2 s between each plot
     time.sleep(2) if t == 0 else time.sleep(0.0)
+"*****************************************************************************"
+
+firstPlot = False
+surfPlot = None
+surfFig = None
+surfAxes = None
+
+def plot_u_mayavi(u, x, y, t):
+    """
+    user_action function for solver.
+    """
+    global surfPlot, surfFig, surfAxes
+    if not surfPlot:
+        surfFig = mlab.figure(size=(1024,768))
+        surfPlot = mlab.surf(x,y,u, warp_scale=1)
+        surfAxes = mlab.axes(extent=[x.min(), x.max(), y.min(), y.max(), -0.5,0.5])
+    else:
+        surfFig.scene.disable_render = True
+        surfPlot.mlab_source.set(x=x, y=y, scalars=u)
+        #surfAxes.extent=[x.min(), x.max(), y.min(), y.max(), -0.1, 0.1]
+        surfFig.scene.reset_zoom()
+        surfFig.scene.disable_render = False
+    if t == 0:
+        time.sleep(0.5)
+    time.sleep(0.02)
     
 
 "*****************************************************************************"
@@ -274,7 +300,7 @@ def viz(problem, Lx, Ly, Nx, Ny, dt, T,
     """
     
     if animate:
-        user_action = plot_u
+        user_action = plot_u_mayavi
     else: 
         user_action =  None
         
@@ -387,7 +413,7 @@ def define_command_line_options(parser=None):
                         help='make animation')
                         
                         
-    parser.add_argument('--runtests', action='store_true', default=True,
+    parser.add_argument('--runtests', action='store_true', default=False,
                         help='run nosetests')
         
         
