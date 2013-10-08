@@ -4,7 +4,10 @@ Created on Fri Oct  4 11:49:56 2013
 
 @author: Milad H. Mobarhan
 """
-from pylab import*
+import sys
+sys.path.append("..")
+
+from pylab import *
 import nose.tools as nt
 import waveMotion as wm
 
