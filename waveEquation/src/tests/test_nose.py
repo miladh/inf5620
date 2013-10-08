@@ -48,6 +48,8 @@ def test_constantSolution():
         def p(self,x,y):
             return 1.0
     "*************************************************************************"
+    print "------------------test constant solution----------------"    
+    
     dt=0.01; T = 0.3; Lx=1; Ly=1; Nx=10; Ny=10 
     b=2; c=0.05
     BC = "neumann"
@@ -117,7 +119,9 @@ def test_standingUndamped():
         def p(self,x,y):
             return 1.0
     "*************************************************************************"
-    dt=0.01; T = 3; Lx=1; Ly=1; Nx=10; Ny=10
+    print "------------------test standing undamped----------------"   
+    
+    dt=0.01; T = 10; Lx=1; Ly=1; Nx=10; Ny=10
     b = 0.0; A = 0.05; w=100.0; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
     BC = "neumann"
     version = "vec"
@@ -137,6 +141,8 @@ def test_standingUndamped():
         xv = x[:,newaxis]      # for vectorized function evaluations
         yv = y[newaxis,:]
         ue = 0*u
+        dx = x[1] - x[0]   
+        hx2 = (dt/dx)**2
         
         for tn in t:
             ue[:,:]  = problem.exactSolution(xv,yv,tn)
@@ -144,8 +150,8 @@ def test_standingUndamped():
         
         e = abs(u-ue)
         e_max = max(e_max, e.max())
-       
-#        print "dt= ", dt, "  ", e_max/dt**2
+#       
+        print "dt= ", dt, "  ", e_max/hx2
 
 "*****************************************************************************"
 
@@ -165,12 +171,11 @@ def test_cubicSolution():
         where
             X(x) = 2*x^3 -3*Lx*x^2
             Y(y) = 2*y^3 -3*Ly*y^2
-            T(t) = sin(t)
+            T(t) = t
             
         """
-        def __init__(self, b, A,w, kx,ky):    
+        def __init__(self, b, kx,ky):    
             self.b = b
-            self.A = A ; self.w = w
             self.Lx, self.Ly = Lx, Ly
 
         def X(self,x):
@@ -180,18 +185,19 @@ def test_cubicSolution():
            return (2*y**3 - 3*self.Ly*y**2)
             
         def exactSolution(self,x,y,t):
-            return self.A*self.X(x)*self.Y(y)*sin(self.w*t)
+            return self.X(x)*self.Y(y)*t
                
         def I(self,x,y):        
             return self.exactSolution(x,y,0)
           
         def V(self,x,y): 
-            return self.A*self.X(x)*self.Y(y)*self.w
+            return self.X(x)*self.Y(y)
     
-        def f(self,x,y,t):          
-            fx = (12*x-6*Lx)*self.Y(y)*sin(self.w*t)
-            fy = (12*y-6*Ly)*self.X(x)*sin(self.w*t)
-            return -self.q(x,y)*self.A*(fx+fy)
+        def f(self,x,y,t):     
+            q = self.q(x,y)
+            fx = (12*x-6*Lx)*self.Y(y)
+            fy = (12*y-6*Ly)*self.X(x)
+            return -q**2*(fx+fy)*t
     
         def q(self,x,y):
             return 1.0
@@ -199,11 +205,12 @@ def test_cubicSolution():
         def p(self,x,y):
             return 1.0
     "*************************************************************************"
-    T = 3; Lx=1; Ly=1; Nx=10; Ny=10
-    b = 0.0; A = 0.04; w=pi;
+    print "------------------test cubic solution-------------------"       
+        
+    T = 0.1; Lx=1; Ly=1; Nx=10; Ny=10
+    b = 0.0;
     BC = "neumann"
-    versions = ["vec"]
-#    versions = ["vec", "scalar" ]
+    versions = ["scalar", "vec" ]
     animate_ue = False
     
     
@@ -213,27 +220,26 @@ def test_cubicSolution():
     
     for dt in dtValues: 
         for version in versions:
-            problem = case_cubicSolution(b,A,w,Lx,Ly)
+            problem = case_cubicSolution(b,Lx,Ly)
             
             #Run solver and visualize u at each time level
             u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny,
                                 dt=dt, T=T, BC = BC, version=version, 
-                                animate=True)
+                                animate=False)
             
             xv = x[:,newaxis]          # for vectorized function evaluations
             yv = y[newaxis,:]
             ue = 0*u
-            
             for tn in t:
                 ue[:,:]  = problem.exactSolution(xv,yv,tn)
                 if animate_ue and dt==dtValues.min(): wm.plot_u(ue,x,y,tn)
+
             
             difference = abs(ue - u).max()  # max deviation
                        
             if not nt.assert_almost_equal(difference, 0, places=14):
                 print version + ": ", "test_cubicSolution succeeded!"
  
-            
                     
 "*****************************************************************************"    
 if __name__ == '__main__':
