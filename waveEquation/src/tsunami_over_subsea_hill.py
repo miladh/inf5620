@@ -48,7 +48,7 @@ class TsunamiProblem(wm.Problem):
     def p(self,x,y):
         return 1.0
 def runTsunamiProblem():
-    dt=0.01; T = 10; Lx=1.0; Ly=1.0; Nx=40; Ny=40
+    dt=0.01; T = 10; Lx=1.0; Ly=1.0; Nx=100; Ny=100
     b=0.0
     BC = "neumann"
     versions = ["vec"] #, "scalar"]
