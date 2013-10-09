@@ -72,7 +72,7 @@ def test_cubicSolution():
         
         #Run solver and visualize u at each time level
         u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, dt=dt, T=T, 
-                   BC = BC, version=version, animate=True)
+                   BC = BC, version=version, animate=False)
          
         print "Calculating ue"
         xv = x[:,newaxis]          # for vectorized function evaluations

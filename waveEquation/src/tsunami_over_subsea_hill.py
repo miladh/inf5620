@@ -1,6 +1,7 @@
 from pylab import *
 import nose.tools as nt
 import waveMotion as wm
+import mayavi.mlab as mlab
 
 class TsunamiProblem(wm.Problem):
     def __init__(self, b, Lx, Ly):
@@ -24,7 +25,7 @@ class TsunamiProblem(wm.Problem):
         return 0 * x + 0 * y
 
     def q(self,x,y):
-        return self.linearHill(x,y,0.85)
+        return self.rectangularHill(x,y,0.95)
     
     def rectangularHill(self,x,y,b):
         Lx = self.Lx
@@ -38,17 +39,18 @@ class TsunamiProblem(wm.Problem):
         result = 1 - b * (Lx - x)
         return result
     
-    def gaussian2D(self,x0,y0,x,y,b):
+    def gaussian2D(self,x,y,Ia,b):
+        x0 = self.Lx / 2
+        y0 = self.Ly / 2
         I0 = 1
-        Ia = -0.8
         Is = 0.5
         r2 = (x - x0)**2 + (y - y0)**2 / b
-        return I0 + Ia * exp(-r2 / Is**2)        
+        return I0 - Ia * exp(-r2 / Is**2)        
 
     def p(self,x,y):
         return 1.0
 def runTsunamiProblem():
-    dt=0.01; T = 10; Lx=1.0; Ly=1.0; Nx=40; Ny=40
+    dt=0.01; T = 20.0; Lx=1.0; Ly=1.0; Nx=40; Ny=40
     b=0.0
     BC = "neumann"
     versions = ["vec"] #, "scalar"]
@@ -59,6 +61,8 @@ def runTsunamiProblem():
         #Run solver and visualize u at each time level
         u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, dt=dt, T=T, 
                    BC = BC, version=version, animate=True)
+        
+        mlab.savefig("test.vrml")
          
             
 if __name__ == "__main__":
