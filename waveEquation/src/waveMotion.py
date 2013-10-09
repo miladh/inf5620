@@ -284,15 +284,9 @@ def plot_u_mayavi(u, x, y, t):
     else:
         surfFig.scene.disable_render = True
         surfFig.scene.anti_aliasing_frames = 0
-        surfPlot.mlab_source.set(x=x, y=y, scalars=u)
-        #surfAxes.extent=[x.min(), x.max(), y.min(), y.max(), -0.1, 0.1]
-        surfFig.scene.reset_zoom()
-        surfFig.scene.disable_render = False
     if t == 0:
         time.sleep(0.5)
     time.sleep(0.02)
-    
-
 "*****************************************************************************"
 def viz(problem, Lx, Ly, dx, dy, dt, T, 
         version=None ,BC=None, animate=True):
@@ -428,17 +422,20 @@ def main():
 
 
     # Run nosetests
-    if(args.runtests):
-        import subprocess
-        subprocess.call(["nosetests", "-s"])
+#    if(args.runtests):
+#        import subprocess
+#        subprocess.call(["nosetests", "-s"])
 
 
     #Set up problem
+
 #    problem = SimpleWave(args.b)
 #
 #    #Run solver and visualize u at each time level
 #    viz(problem, args.Lx, args.Ly, args.dx, args.dy, args.dt, args.T, 
 #        args.version,args.BC, args.animate)
+
+
  
     
     

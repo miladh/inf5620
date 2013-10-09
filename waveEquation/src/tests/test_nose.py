@@ -62,8 +62,6 @@ def test_constantSolution():
         #Run solver and visualize u at each time level
         u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, dt=dt, T=T, 
                    BC = BC, version=version, animate=True)
-        u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, T=T, 
-                   BC = BC, version=version, animate=False)
         
         xv = x[:,newaxis]          # for vectorized function evaluations
         yv = y[newaxis,:]
@@ -154,7 +152,9 @@ def test_standingUndamped():
         e = abs(u-ue).max()
         
 #        print "dt=", dt, " dx=", dx, " dy=", dy
+
         print "error= ", e/(dt/dx)
+
 
 "*****************************************************************************"
 
@@ -214,7 +214,7 @@ def test_cubicSolution():
     b = 0.0;
     BC = "neumann"
     versions = ["scalar", "vec" ]
-    animate_ue = False
+    animate_ue = True
     
     
     
