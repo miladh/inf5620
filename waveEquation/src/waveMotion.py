@@ -14,7 +14,7 @@ import time;
 close("all")
     
 "*****************************************************************************"
-def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
+def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
             user_action=None):
     """
     Solve 
@@ -40,13 +40,13 @@ def solver(problem, Lx, Ly, Nx, Ny, dt, T,   BC = None, version = None,
         raise NotImplementedError 
         
     
+    x = arange(-dx, Lx+2*dx, dx)
+    y = arange(-dy, Ly+2*dy, dy)
     
-    x = linspace(0, Lx, Nx+1)         # mesh points 
-    y = linspace(0, Ly, Ny+1)         
-    dx = x[1] - x[0]                  # mesh spacing
-    dy = y[1] - y[0]                
-    x = sort(append(x, [-dx, Lx+dx])) # Adding ghost points
-    y = sort(append(y, [-dy, Ly+dy])) 
+    Nx = len(x)-3
+    Ny = len(y)-3
+ 
+
     
     xv = x[:,newaxis]          # for vectorized function evaluations
     yv = y[newaxis,:]
@@ -294,7 +294,7 @@ def plot_u_mayavi(u, x, y, t):
     
 
 "*****************************************************************************"
-def viz(problem, Lx, Ly, Nx, Ny, dt, T, 
+def viz(problem, Lx, Ly, dx, dy, dt, T, 
         version=None ,BC=None, animate=True):
     """
     Run solver and visualize u at each time level.
@@ -305,7 +305,7 @@ def viz(problem, Lx, Ly, Nx, Ny, dt, T,
     else: 
         user_action =  None
         
-    u, x, y, t, cpu = solver(problem, Lx, Ly, Nx, Ny, dt, T, BC, version,
+    u, x, y, t, cpu = solver(problem, Lx, Ly, dx, dy, dt, T, BC, version,
                             user_action)
 
 #    print "CPU time: ", cpu ,"\n"
@@ -383,12 +383,12 @@ def define_command_line_options(parser=None):
         default=1.0, help='upper boundary in y direction',metavar='Ly')
     
     parser.add_argument(
-        '--Nx', '--num_mesh_cells_x', type=int, default=20.0,
-        help='total number of mesh cells in the x direction',metavar='Nx')
+        '--dx', '--step_lenght_x', type=int, default=0.1,
+        help='step length in the x direction',metavar='dx')
     
     parser.add_argument(
-        '--Ny', '--num_mesh_cells_y', type=int, default=20.0, 
-        help='total number of mesh cells in the y direction',metavar='Ny')   
+        '--dy', '--step_lenght_y', type=int, default=0.1, 
+        help='step length in the y direction',metavar='dy')   
    
     parser.add_argument(
         '--dt', '--time_step_value', type=float, default=0.01, 
@@ -435,11 +435,11 @@ def main():
 
     #Set up problem
 #    problem = SimpleWave(args.b)
-    
-    #Run solver and visualize u at each time level
-#    viz(problem, args.Lx, args.Ly, args.Nx, args.Ny, args.dt, args.T, 
+#
+#    #Run solver and visualize u at each time level
+#    viz(problem, args.Lx, args.Ly, args.dx, args.dy, args.dt, args.T, 
 #        args.version,args.BC, args.animate)
-    
+ 
     
     
     

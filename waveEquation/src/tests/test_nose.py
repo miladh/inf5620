@@ -16,7 +16,7 @@ import waveMotion as wm
 def test_constantSolution():
     """
     Test problem where u=I is the exact solution, to be
-    reproduced (to machine precision) by any relevant method.
+    reproduced (to machine precision) by ady relevant method.
     """
     "*************************************************************************"
     class case_constantSolution(wm.Problem):
@@ -50,7 +50,7 @@ def test_constantSolution():
     "*************************************************************************"
     print "------------------test constant solution----------------"    
     
-    dt=0.01; T = 0.3; Lx=1; Ly=1; Nx=10; Ny=10 
+    dt=0.01; T = 0.3; Lx=1; Ly=1; dx=0.1; dy=0.1 
     b=2; c=0.05
     BC = "neumann"
     versions = ["vec", "scalar" ]
@@ -62,6 +62,8 @@ def test_constantSolution():
         #Run solver and visualize u at each time level
         u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, dt=dt, T=T, 
                    BC = BC, version=version, animate=True)
+        u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, T=T, 
+                   BC = BC, version=version, animate=False)
         
         xv = x[:,newaxis]          # for vectorized function evaluations
         yv = y[newaxis,:]
@@ -121,37 +123,38 @@ def test_standingUndamped():
     "*************************************************************************"
     print "------------------test standing undamped----------------"   
     
-    dt=0.01; T = 10; Lx=1; Ly=1; Nx=10; Ny=10
+    dt_0=0.5; T = 10; Lx=10; Ly=10; dx_0=1.0; dy_0=1.0
     b = 0.0; A = 0.05; w=100.0; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
     BC = "neumann"
     version = "vec"
     animate_ue = False
     
+#    h0 = float(dt)/dx
     
     
-    dtValues = array([0.5, 0.25, 0.1, 0.05, 0.025, 0.01])
+
     problem = case_constantSolution(b,A,w,kx,ky)
     
-    for dt in dtValues:
-        e_max=.0
-        u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, 
+    for i in range(0,5):
+        r  = 2**(-i)
+        dt = r*dt_0; 
+        dx = r*dx_0; dy = r*dy_0
+        u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
                              dt=dt, T=T,BC = BC, version=version, 
                              animate=True)
                              
         xv = x[:,newaxis]      # for vectorized function evaluations
         yv = y[newaxis,:]
         ue = 0*u
-        dx = x[1] - x[0]   
-        hx2 = (dt/dx)**2
-        
+    
         for tn in t:
             ue[:,:]  = problem.exactSolution(xv,yv,tn)
             if animate_ue and dt==dtValues.min(): wm.plot_u(ue,x,y,tn)
         
-        e = abs(u-ue)
-        e_max = max(e_max, e.max())
-#       
-        print "dt= ", dt, "  ", e_max/hx2
+        e = abs(u-ue).max()
+        
+#        print "dt=", dt, " dx=", dx, " dy=", dy
+        print "error= ", e/(dt/dx)
 
 "*****************************************************************************"
 
@@ -207,7 +210,7 @@ def test_cubicSolution():
     "*************************************************************************"
     print "------------------test cubic solution-------------------"       
         
-    T = 0.1; Lx=1; Ly=1; Nx=10; Ny=10
+    T = 0.1; Lx=1; Ly=1; dx=0.1; dy=0.1
     b = 0.0;
     BC = "neumann"
     versions = ["scalar", "vec" ]
@@ -223,7 +226,7 @@ def test_cubicSolution():
             problem = case_cubicSolution(b,Lx,Ly)
             
             #Run solver and visualize u at each time level
-            u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny,
+            u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy,
                                 dt=dt, T=T, BC = BC, version=version, 
                                 animate=False)
             
@@ -246,3 +249,4 @@ if __name__ == '__main__':
     test_constantSolution()
     test_standingUndamped()
     test_cubicSolution()
+
