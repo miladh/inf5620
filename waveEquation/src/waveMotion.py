@@ -14,6 +14,20 @@ import time;
 close("all")
     
 "*****************************************************************************"
+def stabilityCriterion(problem,xv,yv,dx,dy,dt):
+    q = zeros((xv.shape[0],yv.shape[1]))
+    q[:,:] = problem.q(xv, yv)
+    dtx = float(dx)/q.max()
+    dty = float(dy)/q.max()
+    
+    if dt < min(dtx,dty):
+        pass
+    else:
+        dt = min(dtx,dty)
+    
+    return dt
+    
+"*****************************************************************************"
 def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
             user_action=None):
     """
@@ -40,31 +54,29 @@ def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
         raise NotImplementedError 
         
     
-    x = arange(-dx, Lx+2*dx, dx)
-    y = arange(-dy, Ly+2*dy, dy)
-    
-    Nx = len(x)-3
-    Ny = len(y)-3
+    x = arange(-dx, Lx+2*dx, dx)  #mesh points, including ghost points
+    y = arange(-dy, Ly+2*dy, dy)  
+    Nx = len(x); Ny = len(y)
  
-
-    
     xv = x[:,newaxis]          # for vectorized function evaluations
     yv = y[newaxis,:]
+    
+    u   = zeros((Nx,Ny))   # solution array
+    u_1 = zeros((Nx,Ny))   # solution at t-dt
+    u_2 = zeros((Nx,Ny))   # solution at t-2*dt
+    
+    Ix = range(1, u.shape[0]-1) #indices for the real physical points
+    Iy = range(1, u.shape[1]-1)
+
+    # Ensure that stability criterion is satisfied
+    dt = stabilityCriterion(problem,xv,yv,dx,dy,dt)
     
     Nt = int(round(T/float(dt)))
     t = linspace(0, Nt*dt, Nt+1)    # mesh points in time
     
-    
     hx2 = (dt/dx)**2     # help variable
     hy2 = (dt/dy)**2     # help variable
         
-
-    u   = zeros((Nx+3,Ny+3))   # solution array
-    u_1 = zeros((Nx+3,Ny+3))   # solution at t-dt
-    u_2 = zeros((Nx+3,Ny+3))   # solution at t-2*dt
-    
-    Ix = range(1, u.shape[0]-1) #indices for the real physical points
-    Iy = range(1, u.shape[1]-1)
     It = range(0, t.shape[0])    
     
     t0 = time.clock()          # for measuring CPU time    
@@ -284,6 +296,10 @@ def plot_u_mayavi(u, x, y, t):
     else:
         surfFig.scene.disable_render = True
         surfFig.scene.anti_aliasing_frames = 0
+        surfPlot.mlab_source.set(x=x, y=y, scalars=u)
+        #surfAxes.extent=[x.min(), x.max(), y.min(), y.max(), -0.1, 0.1]
+        surfFig.scene.reset_zoom()
+        surfFig.scene.disable_render = False
     if t == 0:
         time.sleep(0.5)
     time.sleep(0.02)
@@ -295,7 +311,7 @@ def viz(problem, Lx, Ly, dx, dy, dt, T,
     """
     
     if animate:
-        user_action = plot_u_mayavi
+        user_action = plot_u
     else: 
         user_action =  None
         
@@ -422,9 +438,9 @@ def main():
 
 
     # Run nosetests
-#    if(args.runtests):
-#        import subprocess
-#        subprocess.call(["nosetests", "-s"])
+    if(args.runtests):
+        import subprocess
+        subprocess.call(["nosetests", "-s"])
 
 
     #Set up problem
