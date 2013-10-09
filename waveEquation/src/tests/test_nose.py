@@ -148,7 +148,7 @@ def test_standingUndamped():
         e = abs(u-ue).max()
         
 #        print "dt=", dt, " dx=", dx, " dy=", dy
-        print "error= ", e/(dt/dx)
+        print "error= ", e
 
 "*****************************************************************************"
 
@@ -208,7 +208,7 @@ def test_cubicSolution():
     b = 0.0;
     BC = "neumann"
     versions = ["scalar", "vec" ]
-    animate_ue = False
+    animate_ue = True
     
     
     
@@ -242,4 +242,4 @@ def test_cubicSolution():
 if __name__ == '__main__':
     test_constantSolution()
     test_standingUndamped()
-#    test_cubicSolution()
+    test_cubicSolution()
