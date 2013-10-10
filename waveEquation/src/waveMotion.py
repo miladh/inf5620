@@ -289,23 +289,24 @@ def plot_u_mayavi(u, x, y, t, disable_render=True,opacity=0.7,z_scale=0.5,doSlee
     user_action function for solver.
     """
     global surfPlot, surfFig, surfAxes
+    normalizationFactor = 1 / z_scale
     if not surfPlot:
         surfFig = mlab.figure(size=(1024,768),bgcolor=(0,0,0))
         # Set up temporary plot for scaling
         X,Y = meshgrid(x,y)
-        u = sin(X) * z_scale
-        surfPlot = mlab.surf(x,y,u, warp_scale=z_scale, opacity=opacity, colormap="Blues", vmin=-0.2*z_scale, vmax=0.7*z_scale)
+        u = sin(X)
+        surfPlot = mlab.surf(x,y,u, warp_scale=1, opacity=opacity, colormap="Blues", vmin=-0.2, vmax=0.7)
         # Set reverse colormap
         lut = surfPlot.module_manager.scalar_lut_manager.lut.table.to_array()
         ilut = lut[::-1]
         surfPlot.module_manager.scalar_lut_manager.lut.table = ilut
-        #surfAxes = mlab.axes(nb_labels=5,
-        #                     extent=[x.min(), x.max(), y.min(), y.max(), -z_scale, z_scale])
+        surfAxes = mlab.axes(nb_labels=5,
+                             extent=[x.min(), x.max(), y.min(), y.max(), -1, 1])
         
     if disable_render:
         surfFig.scene.disable_render = True
     surfFig.scene.anti_aliasing_frames = 0
-    surfPlot.mlab_source.set(x=x, y=y, scalars=u)
+    surfPlot.mlab_source.set(x=x, y=y, scalars=u*normalizationFactor)
     #surfAxes.extent=[x.min(), x.max(), y.min(), y.max(), -0.1, 0.1]
     surfFig.scene.reset_zoom()
     if disable_render:
