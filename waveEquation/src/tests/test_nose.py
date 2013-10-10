@@ -393,23 +393,25 @@ def test_standingDamped():
             return 0.0
     
         def q(self,x,y):
-            return 1.0
+            return 10.0
     
         def p(self,x,y):
             return 1.0
     "*************************************************************************"
     print "------------------test standing damped----------------"   
     
-    dt_0=0.01; T = 10; Lx=10; Ly=10; dx_0=0.1; dy_0=0.1
-    b = 0.1; A = 0.05; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
-    BC = "neumann" ; pltool="mayavi"
+    dt_0=0.5; T = 10; Lx=10; Ly=10; dx_0=1.0; dy_0=1.0
+    b = 0.0001; A = 0.05; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
+    BC = "neumann" ; pltool="matplotlib"
 #    versions = ["vec","scalar"]
     versions = ["vec"]
-    animate_ue = True
+    animate_ue = False
     
     for version in versions:
+        eValues  = []
+        dtValues  = []
         problem = case_standingDamped(b,A,kx,ky)
-        for i in range(0,1):
+        for i in range(0,5):
             r  = 2**(-i)
             dt = r*dt_0; 
             dx = r*dx_0; dy = r*dy_0
@@ -423,17 +425,27 @@ def test_standingDamped():
         
             for tn in t:
                 ue[:,:]  = problem.exactSolution(xv,yv,tn)
-                print ue.max()
                 if animate_ue: wm.plot_u_mayavi(ue,x,y,tn,z_scale=0.05)
             
             e = abs(u-ue).max()
-            
-    #        print "dt=", dt, " dx=", dx, " dy=", dy
-            print "error= ", e
+            eValues.append(e)
+            dtValues.append(dt)
+
   
+        m = len(dtValues)
+        r = []   
+        for i in range(1, m, 1):    
+            r.append(log(eValues[i-1]/eValues[i])/ log(dtValues[i-1]/dtValues[i])) 
+       
+    expectedRate = 2.0
+    calculatedRate = r[-1]
+    if not nt.assert_almost_equal(expectedRate,calculatedRate,places=1):
+                print version + ":","test_standingDampedSolution succeeded!"
+  
+"*****************************************************************************"
 if __name__ == '__main__':
-#    test_constantSolution()
-#    test_cubicSolution()
-#    test_plugwaveSolution()
-#    test_standingUndamped()
+    test_constantSolution()
+    test_cubicSolution()
+    test_plugwaveSolution()
+    test_standingUndamped()
     test_standingDamped()
