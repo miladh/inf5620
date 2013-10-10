@@ -120,7 +120,6 @@ def runTsunamiProblem():
     dt=0.005; T = 1; Lx=1.0; Ly=1.0; dx=0.01; dy=0.01
     b=0.0
     BC = "neumann"
-    versions = ["vec"] #, "scalar"]
 
     doSave = False
     

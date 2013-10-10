@@ -66,16 +66,17 @@ def test_constantSolution():
         xv = x[:,newaxis]          # for vectorized function evaluations
         yv = y[newaxis,:]
         ue = 0*u
-        ue[:,:]  = problem.exactSolution(xv,yv,t)
+
+        for t in t:
+            ue[:,:]  = problem.exactSolution(xv,yv,t)
+            if animate_ue:
+                wm.plot_u(ue,x,y,t)
         difference = abs(ue - u).max()  # max deviation
         
         
         if not nt.assert_almost_equal(difference, 0, places=14):
             print version + ": ", "test_constantSolution succeeded!"
     
-    if animate_ue:
-        for t in t:
-            wm.plot_u(ue,x,y,t)
             
            
 "*****************************************************************************"
@@ -266,11 +267,103 @@ def test_cubicSolution():
                        
             if not nt.assert_almost_equal(difference, 0, places=14):
                 print version + ": ", "test_cubicSolution succeeded!"
+
+
+"*****************************************************************************"
+def test_plugwaveSolution():
+    """
+    Verification: Plug wave solution, constant velocity, no damping,
+            I(x) is constant in some region of  the domain and 
+            zero elsewhere. Check that an initial plug is correct 
+            back after one period.
+    """
+    "*************************************************************************"
+    class case_plugwaveSolution(wm.Problem):
+        """
+        Case:
+            Plug wave solution, constant velocity, no damping,
+            I(x) is constant in some region of  the domain and 
+            zero elsewhere.            
+        """
+        def __init__(self, b, sigma, Lx, Ly, plug=None):    
+            self.b = b; self.plug = plug
+            self.Lx, self.Ly = Lx, Ly
+            self.c = Lx/2.0
+
+        def exactSolution(self,x,y,t):
+            return self.I(x,y)
+            
+        def I(self,x,y):     
+            if self.plug == "x":
+                return self.Ix(x,y,self.c)
+            elif self.plug=="y":
+                return self.Iy(x,y,self.c)
+            else:
+                raise NotImplementedError 
+        
+        def Ix(self,x,y,c):
+            if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
+                I = zeros((x.shape[0],y.shape[1]))     
+                for i in range(1,x.shape[0]):
+                    if abs(x[i,0]-c) > sigma:
+                        I[i,:] = 0.0
+                    else:
+                        I[i,:] = 1.0
+                return I  
+            else:
+                return 0 if abs(x-self.c) > sigma else 1
+        
+        def Iy(self,x,y,c):
+            if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
+                I = zeros((y.shape[0],y.shape[1]))
+                for i in range(1,y.shape[1]):
+                    if abs(y[0,i]-c) > sigma:
+                        I[:,i] = 0.0
+                    else:
+                        I[:,i] = 1.0
+                return I  
+            else:
+                return 0 if abs(y-self.c) > sigma else 1
+    
+            
+        def V(self,x,y): 
+            return 0.0
+    
+        def f(self,x,y,t):     
+            return 0.0
+            
+        def q(self,x,y):
+            return 1
+    
+        def p(self,x,y):
+            return 1.0
+    "*************************************************************************"
+    print "--------------test plug wave solution---------------"   
+    dt = dx = dy = 0.1; T = Lx = Ly = 1; 
+    b=0; sigma = 0.05; plugs = ["x","y"]
+    BC = "neumann" ; pltool="mayavi"
+    versions = ["vec","scalar"]
+    
+    for version in versions:
+        for plug in plugs:
+            problem = case_plugwaveSolution(b,sigma,Lx,Ly,plug=plug)
+            
+            #Run solver and visualize u at each time level
+            u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, T=T, 
+                       BC = BC, version=version, animate=False, pltool=pltool)
+            
+            xv = x[:,newaxis]          # for vectorized function evaluations
+            yv = y[newaxis,:]
+            ue = 0*u
  
-                    
+            ue[:,:]  = problem.exactSolution(xv,yv,t)        
+            difference = abs(ue - u).max()  # max deviation
+                       
+            if not nt.assert_almost_equal(difference, 0, places=14):
+                print version + "-" + plug + ":","test_plugwaveSolution succeeded!"
 "*****************************************************************************"    
 if __name__ == '__main__':
     test_constantSolution()
     test_standingUndamped()
     test_cubicSolution()
-
+    test_plugwaveSolution()
