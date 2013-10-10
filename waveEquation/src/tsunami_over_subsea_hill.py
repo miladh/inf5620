@@ -50,7 +50,7 @@ class TsunamiProblem(wm.Problem):
     def p(self,x,y):
         return 1.0
 def runTsunamiProblem():
-    dt=0.01; T = 20.0; Lx=1.0; Ly=1.0; Nx=40; Ny=40
+    dt=0.01; T = 20.0; Lx=1.0; Ly=1.0; dx=0.05; dy=0.05
     b=0.0
     BC = "neumann"
     versions = ["vec"] #, "scalar"]
@@ -59,7 +59,7 @@ def runTsunamiProblem():
         problem = TsunamiProblem(b=b, Lx=Lx, Ly=Ly)
         
         #Run solver and visualize u at each time level
-        u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, dt=dt, T=T, 
+        u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, T=T, 
                    BC = BC, version=version, animate=True)
         
         mlab.savefig("test.vrml")

@@ -267,7 +267,7 @@ def plot_u(u, x, y, t):
     ax.plot_wireframe(X, Y, u,rstride=1, cstride=1, cmap=cm.jet,
                     linewidth=0.1, antialiased=False)
     
-    ax.set_zlim(-0.1,0.1)
+#    ax.set_zlim(-0.1,0.1)
     ax.set_xlabel('$X$', fontsize=15)
     ax.set_ylabel('$Y$', fontsize=15)
     ax.set_zlabel('$u(x,y)$', fontsize=15)
@@ -305,13 +305,16 @@ def plot_u_mayavi(u, x, y, t):
     time.sleep(0.02)
 "*****************************************************************************"
 def viz(problem, Lx, Ly, dx, dy, dt, T, 
-        version=None ,BC=None, animate=True):
+        version=None ,BC=None, animate=True, pltool="matplotlib"):
     """
     Run solver and visualize u at each time level.
     """
     
     if animate:
-        user_action = plot_u
+        if pltool=="matplotlib":
+            user_action = plot_u
+        else:
+            user_action = plot_u_mayavi
     else: 
         user_action =  None
         
@@ -423,8 +426,11 @@ def define_command_line_options(parser=None):
     parser.add_argument('--animate', action='store_true', default=True,
                         help='make animation')
                         
+    parser.add_argument(
+        '--pltool', '--plot_tool', type=str, default="matplotli",
+        help='tool for animating', metavar='pltool') 
                         
-    parser.add_argument('--runtests', action='store_true', default=False,
+    parser.add_argument('--runtests', action='store_true', default=True,
                         help='run nosetests')
         
         
@@ -449,7 +455,7 @@ def main():
 #
 #    #Run solver and visualize u at each time level
 #    viz(problem, args.Lx, args.Ly, args.dx, args.dy, args.dt, args.T, 
-#        args.version,args.BC, args.animate)
+#        args.version,args.BC, args.animate,args.pltool)
 
 
  
