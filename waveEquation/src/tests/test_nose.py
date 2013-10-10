@@ -400,7 +400,7 @@ def test_standingDamped():
     "*************************************************************************"
     print "------------------test standing damped----------------"   
     
-    dt_0=0.5; T = 10; Lx=10; Ly=10; dx_0=1.0; dy_0=1.0
+    dt_0=0.01; T = 10; Lx=10; Ly=10; dx_0=0.1; dy_0=0.1
     b = 0.1; A = 0.05; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
     BC = "neumann" ; pltool="mayavi"
 #    versions = ["vec","scalar"]
@@ -409,7 +409,7 @@ def test_standingDamped():
     
     for version in versions:
         problem = case_standingDamped(b,A,kx,ky)
-        for i in range(0,5):
+        for i in range(0,1):
             r  = 2**(-i)
             dt = r*dt_0; 
             dx = r*dx_0; dy = r*dy_0
@@ -423,7 +423,8 @@ def test_standingDamped():
         
             for tn in t:
                 ue[:,:]  = problem.exactSolution(xv,yv,tn)
-                if animate_ue: wm.plot_u_mayavi(ue,x,y,tn)
+                print ue.max()
+                if animate_ue: wm.plot_u_mayavi(ue,x,y,tn,z_scale=0.05)
             
             e = abs(u-ue).max()
             
