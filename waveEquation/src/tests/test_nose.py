@@ -52,8 +52,8 @@ def test_constantSolution():
     
     dt=0.01; T = 0.3; Lx=1; Ly=1; dx=0.1; dy=0.1 
     b=2; c=0.05
-    BC = "neumann"
-    versions = ["vec", "scalar" ]
+    BC = "neumann" ; pltool="mayavi"
+    versions = ["vec","scalar"]
     animate_ue = False
     
     for version in versions:
@@ -61,7 +61,7 @@ def test_constantSolution():
         
         #Run solver and visualize u at each time level
         u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, T=T, 
-                   BC = BC, version=version, animate=False)
+                   BC = BC, version=version, animate=False, pltool=pltool)
         
         xv = x[:,newaxis]          # for vectorized function evaluations
         yv = y[newaxis,:]
@@ -77,83 +77,7 @@ def test_constantSolution():
         if not nt.assert_almost_equal(difference, 0, places=14):
             print version + ": ", "test_constantSolution succeeded!"
     
-            
-           
-"*****************************************************************************"
-
-def test_standingUndamped():
-    """
-    Verification: standing, undamped waves, constant velocity, no source term.
-    Controling the convergence  rate, using standing, undamped waves.
-    
-    """
-    "*************************************************************************"
-    class case_constantSolution(wm.Problem):
-        """
-        Case:
-            standing, undamped waves,
-            
-            ue = A*cos(kx*x)*cos(ky*y)*cos(w*t)
-        """
-        def __init__(self, b, A, w, kx,ky):    
-            self.b = b
-            self.A = A ; self.w = w
-            self.kx, self.ky = kx, ky
-
-            
-        def exactSolution(self,x,y,t):
-            ue = self.A*cos(self.kx*x)*cos(self.ky*y)*cos(self.w*t)
-            return ue
-               
-        def I(self,x,y):        
-            return  self.exactSolution(x,y,0)
-          
-        def V(self,x,y):     
-            return 0.0
-    
-        def f(self,x,y,t):
-            return 0.0
-    
-        def q(self,x,y):
-            return 1.0
-    
-        def p(self,x,y):
-            return 1.0
-    "*************************************************************************"
-    print "------------------test standing undamped----------------"   
-    
-    dt_0=0.5; T = 10; Lx=10; Ly=10; dx_0=1.0; dy_0=1.0
-    b = 0.0; A = 0.05; w=100.0; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
-    BC = "neumann"
-    version = "vec"
-    animate_ue = False
-
-    problem = case_constantSolution(b,A,w,kx,ky)
-    
-    for i in range(0,5):
-        r  = 2**(-i)
-        dt = r*dt_0; 
-        dx = r*dx_0; dy = r*dy_0
-        u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
-                             dt=dt, T=T,BC = BC, version=version, 
-                             animate=False)
-                             
-        xv = x[:,newaxis]      # for vectorized function evaluations
-        yv = y[newaxis,:]
-        ue = 0*u
-    
-        for tn in t:
-            ue[:,:]  = problem.exactSolution(xv,yv,tn)
-            if animate_ue: wm.plot_u(ue,x,y,tn)
-        
-        e = abs(u-ue).max()
-        
-#        print "dt=", dt, " dx=", dx, " dy=", dy
-        print "error= ", e/(dt/dx)**2
-
-
-"*****************************************************************************"
-
+"*****************************************************************************"            
 def test_cubicSolution():
     """
     Verification: cubic solution, constant velocity, with source term.
@@ -235,38 +159,33 @@ def test_cubicSolution():
     "*************************************************************************"
     print "------------------test cubic solution-------------------"       
         
-    T = 0.1; Lx=1; Ly=1; dx=0.1; dy=0.1
+    dt = 0.01; T = 0.1; Lx=1; Ly=1; dx=0.1; dy=0.1
     b = 0.0;
     BC = "neumann"
     versions = ["vec", "scalar" ]
     animate_ue = False
     
-    
-    
-    dtValues = array([0.01])
+ 
+    for version in versions:
+        problem = case_cubicSolution(b,Lx,Ly,dx,dy)
+        
+        #Run solver and visualize u at each time level
+        u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy,
+                            dt=dt, T=T, BC = BC, version=version, 
+                            animate=False)
+        
+        xv = x[:,newaxis]          # for vectorized function evaluations
+        yv = y[newaxis,:]
+        ue = 0*u
+        for tn in t:
+            ue[:,:]  = problem.exactSolution(xv,yv,tn)
+            if animate_ue and dt==dtValues.min(): wm.plot_u(ue,x,y,tn)
 
-    
-    for dt in dtValues: 
-        for version in versions:
-            problem = case_cubicSolution(b,Lx,Ly,dx,dy)
-            
-            #Run solver and visualize u at each time level
-            u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy,
-                                dt=dt, T=T, BC = BC, version=version, 
-                                animate=False)
-            
-            xv = x[:,newaxis]          # for vectorized function evaluations
-            yv = y[newaxis,:]
-            ue = 0*u
-            for tn in t:
-                ue[:,:]  = problem.exactSolution(xv,yv,tn)
-                if animate_ue and dt==dtValues.min(): wm.plot_u(ue,x,y,tn)
-
-            
-            difference = abs(ue - u).max()  # max deviation
-                       
-            if not nt.assert_almost_equal(difference, 0, places=14):
-                print version + ": ", "test_cubicSolution succeeded!"
+        
+        difference = abs(ue - u).max()  # max deviation
+                   
+        if not nt.assert_almost_equal(difference, 0, places=14):
+            print version + ": ", "test_cubicSolution succeeded!"
 
 
 "*****************************************************************************"
@@ -361,9 +280,159 @@ def test_plugwaveSolution():
                        
             if not nt.assert_almost_equal(difference, 0, places=14):
                 print version + "-" + plug + ":","test_plugwaveSolution succeeded!"
-"*****************************************************************************"    
+"*****************************************************************************"
+def test_standingUndamped():
+    """
+    Verification: standing, undamped waves, constant velocity, no source term.
+    Controling the convergence  rate, using standing, undamped waves.
+    
+    """
+    "*************************************************************************"
+    class case_standingUndamped(wm.Problem):
+        """
+        Case:
+            standing, undamped waves,
+            
+            ue = A*cos(kx*x)*cos(ky*y)*cos(w*t)
+        """
+        def __init__(self, b, A, w, kx,ky):    
+            self.b = b
+            self.A = A ; self.w = w
+            self.kx, self.ky = kx, ky
+
+            
+        def exactSolution(self,x,y,t):
+            ue = self.A*cos(self.kx*x)*cos(self.ky*y)*cos(self.w*t)
+            return ue
+               
+        def I(self,x,y):        
+            return  self.exactSolution(x,y,0)
+          
+        def V(self,x,y):     
+            return 0.0
+    
+        def f(self,x,y,t):
+            return 0.0
+    
+        def q(self,x,y):
+            return 1.0
+    
+        def p(self,x,y):
+            return 1.0
+    "*************************************************************************"
+    print "------------------test standing undamped----------------"   
+    
+    dt_0=0.5; T = 3; Lx=10; Ly=10; dx_0=1.0; dy_0=1.0
+    b = 0.0; A = 0.05; w=100.0; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
+    BC = "neumann" ; pltool="mayavi"
+    versions = ["vec","scalar"]
+    animate_ue = False
+
+    for version in versions:
+        problem = case_standingUndamped(b,A,w,kx,ky)
+        
+        for i in range(0,4):
+            r  = 2**(-i)
+            dt = r*dt_0; 
+            dx = r*dx_0; dy = r*dy_0
+            u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
+                                 dt=dt, T=T,BC = BC, version=version, 
+                                 animate=False,pltool =pltool)
+                                 
+            xv = x[:,newaxis]      # for vectorized function evaluations
+            yv = y[newaxis,:]
+            ue = 0*u
+        
+            for tn in t:
+                ue[:,:]  = problem.exactSolution(xv,yv,tn)
+                if animate_ue: wm.plot_u(ue,x,y,tn)
+            
+            e = abs(u-ue).max()
+            
+        #        print "dt=", dt, " dx=", dx, " dy=", dy
+            print version , "error= ", e/(dt/dx)**2
+
+
+"*****************************************************************************" 
+def test_standingDamped():
+    """
+    Verification: standing, damped waves, constant velocity, no source term.
+    Controling the convergence  rate, using standing, damped waves.
+    
+    """
+    "*************************************************************************"
+    class case_standingDamped(wm.Problem):
+        """
+        Case:
+            standing, damped waves,
+            
+            ue = [A*cos(w*t)+Bsin(w*t)]*exp(-b*t)*cos(kx*x)*cos(ky*y)
+        """
+        def __init__(self, b, A,kx,ky):    
+            self.b = b; self.A = A;
+            self.kx, self.ky = kx, ky
+            
+            q = self.q(0,0)       
+            self.w = sqrt(self.kx**2 * q + self.ky**2 * q - self.b**2)
+            self.B = self.A*self.b/self.w
+
+            
+        def exactSolution(self,x,y,t):
+            b = self.b; A = self.A; B=self.B; w=self.w; kx=self.kx; ky=self.ky
+            ue = (A*cos(t*w) + B*sin(t*w))*exp(-b*t)*cos(kx*x)*cos(ky*y)
+            return ue
+               
+        def I(self,x,y):        
+            return  self.exactSolution(x,y,0)
+          
+        def V(self,x,y):     
+            b = self.b; A = self.A; B=self.B; w=self.w; kx=self.kx; ky=self.ky
+            return (-A*b + B*w)*cos(kx*x)*cos(ky*y)
+    
+        def f(self,x,y,t):
+            return 0.0
+    
+        def q(self,x,y):
+            return 1.0
+    
+        def p(self,x,y):
+            return 1.0
+    "*************************************************************************"
+    print "------------------test standing damped----------------"   
+    
+    dt_0=0.5; T = 10; Lx=10; Ly=10; dx_0=1.0; dy_0=1.0
+    b = 0.1; A = 0.05; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
+    BC = "neumann" ; pltool="mayavi"
+#    versions = ["vec","scalar"]
+    versions = ["vec"]
+    animate_ue = True
+    
+    for version in versions:
+        problem = case_standingDamped(b,A,kx,ky)
+        for i in range(0,5):
+            r  = 2**(-i)
+            dt = r*dt_0; 
+            dx = r*dx_0; dy = r*dy_0
+            u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
+                                 dt=dt, T=T,BC = BC, version=version, 
+                                 animate=False,pltool =pltool)
+                                 
+            xv = x[:,newaxis]      # for vectorized function evaluations
+            yv = y[newaxis,:]
+            ue = 0*u
+        
+            for tn in t:
+                ue[:,:]  = problem.exactSolution(xv,yv,tn)
+                if animate_ue: wm.plot_u_mayavi(ue,x,y,tn)
+            
+            e = abs(u-ue).max()
+            
+    #        print "dt=", dt, " dx=", dx, " dy=", dy
+            print "error= ", e
+  
 if __name__ == '__main__':
-    test_constantSolution()
-    test_standingUndamped()
-    test_cubicSolution()
-    test_plugwaveSolution()
+#    test_constantSolution()
+#    test_cubicSolution()
+#    test_plugwaveSolution()
+#    test_standingUndamped()
+    test_standingDamped()
