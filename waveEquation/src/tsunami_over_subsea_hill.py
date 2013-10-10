@@ -53,7 +53,7 @@ class TsunamiProblem(wm.Problem):
             return self.gaussian2D(x,y,x0=x0, y0=y0, I0=1, Ia=-0.8, Is=Is, b = 0.1)
         elif self.hill == "rectangular":
             I0 = 1.0
-            Ia = -0.8
+            Ia = -0.6
             x0 = self.Lx / 2
             y0 = self.Ly * 3 / 4
             width = 0.6 * self.Lx
@@ -123,9 +123,11 @@ def runTsunamiProblem():
 
     doSave = False
     
-    problem = TsunamiProblem(b=b, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, hill="rectangular", initial_wave="gaussian_sphere")
-               
-    u, x, y, t, cpu = wm.solver(problem, Lx, Ly, dx, dy, dt, T, BC, "vec",
+    problems = [#TsunamiProblem(b=b, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, hill="rectangular", initial_wave="gaussian_sphere"),
+                TsunamiProblem(b=b, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, hill="rectangular", initial_wave="gaussian_wall")]
+    
+    for problem in problems:
+        u, x, y, t, cpu = wm.solver(problem, Lx, Ly, dx, dy, dt, T, BC, "vec",
                         user_action=plot_u_with_hill)
     
     #problem = TsunamiProblem(b=b, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, hill="rectangular", intial_wave="gaussian_wall")                 
