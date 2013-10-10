@@ -48,34 +48,30 @@ def test_constantSolution():
         def p(self,x,y):
             return 1.0
     "*************************************************************************"
+    def assert_no_error(u, x, y, t, n):        
+        xv = x[:,newaxis]      # for vectorized function evaluations
+        yv = y[newaxis,:]
+        ue = 0*u
+        ue = problem.exactSolution(xv,yv,t[1])
+        diff = abs(u - ue).max()   
+        nt.assert_almost_equal(diff, 0, places=14)
+
     print "------------------test constant solution----------------"    
     
     dt=0.01; T = 0.3; Lx=1; Ly=1; dx=0.1; dy=0.1 
     b=2; c=0.05
-    BC = "neumann" ; pltool="mayavi"
+    BC = "neumann";
     versions = ["vec","scalar"]
-    animate_ue = False
     
     for version in versions:
         problem = case_constantSolution(b=b,c=c)
         
         #Run solver and visualize u at each time level
-        u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, T=T, 
-                   BC = BC, version=version, animate=False, pltool=pltool)
+        u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
+                     dt=dt, T=T,BC = BC, version=version, 
+                     user_action=assert_no_error)     
         
-        xv = x[:,newaxis]          # for vectorized function evaluations
-        yv = y[newaxis,:]
-        ue = 0*u
-
-        for t in t:
-            ue[:,:]  = problem.exactSolution(xv,yv,t)
-            if animate_ue:
-                wm.plot_u(ue,x,y,t)
-        difference = abs(ue - u).max()  # max deviation
-        
-        
-        if not nt.assert_almost_equal(difference, 0, places=14):
-            print version + ": ", "test_constantSolution succeeded!"
+        print version + ": ", "test_constantSolution succeeded!"
     
 "*****************************************************************************"            
 def test_cubicSolution():
@@ -157,35 +153,33 @@ def test_cubicSolution():
         def p(self,x,y):
             return 1.0
     "*************************************************************************"
+    def assert_no_error(u, x, y, t, n):
+        xv = x[:,newaxis]      # for vectorized function evaluations
+        yv = y[newaxis,:]
+        ue = 0*u
+        ue = problem.exactSolution(xv,yv,t[n])
+        diff = abs(u - ue).max()   
+        nt.assert_almost_equal(diff, 0, places=14)
+   
     print "------------------test cubic solution-------------------"       
-        
+   
     dt = 0.01; T = 0.1; Lx=1; Ly=1; dx=0.1; dy=0.1
     b = 0.0;
     BC = "neumann"
     versions = ["vec", "scalar" ]
-    animate_ue = False
+
     
  
     for version in versions:
         problem = case_cubicSolution(b,Lx,Ly,dx,dy)
         
         #Run solver and visualize u at each time level
-        u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy,
-                            dt=dt, T=T, BC = BC, version=version, 
-                            animate=False)
-        
-        xv = x[:,newaxis]          # for vectorized function evaluations
-        yv = y[newaxis,:]
-        ue = 0*u
-        for tn in t:
-            ue[:,:]  = problem.exactSolution(xv,yv,tn)
-            if animate_ue and dt==dtValues.min(): wm.plot_u(ue,x,y,tn)
-
-        
-        difference = abs(ue - u).max()  # max deviation
-                   
-        if not nt.assert_almost_equal(difference, 0, places=14):
-            print version + ": ", "test_cubicSolution succeeded!"
+        u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
+                     dt=dt, T=T,BC = BC, version=version, 
+                     user_action=assert_no_error)    
+                
+                 
+        print version + ": ", "test_cubicSolution succeeded!"
 
 
 "*****************************************************************************"
@@ -257,10 +251,19 @@ def test_plugwaveSolution():
         def p(self,x,y):
             return 1.0
     "*************************************************************************"
+    def assert_no_error(u, x, y, t):
+        xv = x[:,newaxis]      # for vectorized function evaluations
+        yv = y[newaxis,:]
+        u0 = 0*u
+        u0 = problem.I(xv,yv)
+        diff = abs(u - u0).max()   
+        nt.assert_almost_equal(diff, 0, places=14)
+
     print "--------------test plug wave solution---------------"   
+    
     dt = dx = dy = 0.1; T = Lx = Ly = 1; 
     b=0; sigma = 0.05; plugs = ["x","y"]
-    BC = "neumann" ; pltool="mayavi"
+    BC = "neumann" ; 
     versions = ["vec","scalar"]
     
     for version in versions:
@@ -268,18 +271,13 @@ def test_plugwaveSolution():
             problem = case_plugwaveSolution(b,sigma,Lx,Ly,plug=plug)
             
             #Run solver and visualize u at each time level
-            u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, T=T, 
-                       BC = BC, version=version, animate=False, pltool=pltool)
+            u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
+                     dt=dt, T=T,BC = BC, version=version, 
+                     user_action=None)   
             
-            xv = x[:,newaxis]          # for vectorized function evaluations
-            yv = y[newaxis,:]
-            ue = 0*u
- 
-            ue[:,:]  = problem.exactSolution(xv,yv,t)        
-            difference = abs(ue - u).max()  # max deviation
-                       
-            if not nt.assert_almost_equal(difference, 0, places=14):
-                print version + "-" + plug + ":","test_plugwaveSolution succeeded!"
+            assert_no_error(u,x,y,t)
+
+            print version + "-" + plug + ":","test_plugwaveSolution succeeded!"
 "*****************************************************************************"
 def test_standingUndamped():
     """
@@ -320,13 +318,22 @@ def test_standingUndamped():
         def p(self,x,y):
             return 1.0
     "*************************************************************************"
+    def assert_no_error(u, x, y, t, n):
+        xv = x[:,newaxis]      # for vectorized function evaluations
+        yv = y[newaxis,:]
+        ue = 0*u
+        ue = problem.exactSolution(xv,yv,t[n])
+        e = abs(u - ue).max()
+        
+        return e
+    
     print "------------------test standing undamped----------------"   
     
     dt_0=0.5; T = 3; Lx=10; Ly=10; dx_0=1.0; dy_0=1.0
     b = 0.0; A = 0.05; w=100.0; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
-    BC = "neumann" ; pltool="mayavi"
+    BC = "neumann" ; 
     versions = ["vec","scalar"]
-    animate_ue = False
+
 
     for version in versions:
         problem = case_standingUndamped(b,A,w,kx,ky)
@@ -335,22 +342,14 @@ def test_standingUndamped():
             r  = 2**(-i)
             dt = r*dt_0; 
             dx = r*dx_0; dy = r*dy_0
-            u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
-                                 dt=dt, T=T,BC = BC, version=version, 
-                                 animate=False,pltool =pltool)
-                                 
-            xv = x[:,newaxis]      # for vectorized function evaluations
-            yv = y[newaxis,:]
-            ue = 0*u
-        
-            for tn in t:
-                ue[:,:]  = problem.exactSolution(xv,yv,tn)
-                if animate_ue: wm.plot_u(ue,x,y,tn)
-            
-            e = abs(u-ue).max()
+            u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
+                     dt=dt, T=T,BC = BC, version=version, 
+                     user_action=assert_no_error)
+           
+#            e = abs(u-ue).max()
             
         #        print "dt=", dt, " dx=", dx, " dy=", dy
-            print version , "error= ", e/(dt/dx)**2
+#            print version , "error= ", e/(dt/dx)**2
 
 
 "*****************************************************************************" 
@@ -398,14 +397,24 @@ def test_standingDamped():
         def p(self,x,y):
             return 1.0
     "*************************************************************************"
+    def assert_no_error(u, x, y, t, n):
+        xv = x[:,newaxis]      # for vectorized function evaluations
+        yv = y[newaxis,:]
+        ue = 0*u
+        ue = problem.exactSolution(x,y,t[n])
+        e = abs(u - ue).max()   
+
+        return e
+
+        
     print "------------------test standing damped----------------"   
     
     dt_0=0.5; T = 10; Lx=10; Ly=10; dx_0=1.0; dy_0=1.0
     b = 0.0001; A = 0.05; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
-    BC = "neumann" ; pltool="matplotlib"
+    BC = "neumann" ; 
 #    versions = ["vec","scalar"]
     versions = ["vec"]
-    animate_ue = False
+
     
     for version in versions:
         eValues  = []
@@ -415,32 +424,24 @@ def test_standingDamped():
             r  = 2**(-i)
             dt = r*dt_0; 
             dx = r*dx_0; dy = r*dy_0
-            u, x, y, t = wm.viz(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
-                                 dt=dt, T=T,BC = BC, version=version, 
-                                 animate=False,pltool =pltool)
-                                 
-            xv = x[:,newaxis]      # for vectorized function evaluations
-            yv = y[newaxis,:]
-            ue = 0*u
-        
-            for tn in t:
-                ue[:,:]  = problem.exactSolution(xv,yv,tn)
-                if animate_ue: wm.plot_u_mayavi(ue,x,y,tn,z_scale=0.05)
-            
-            e = abs(u-ue).max()
-            eValues.append(e)
-            dtValues.append(dt)
-
-  
-        m = len(dtValues)
-        r = []   
-        for i in range(1, m, 1):    
-            r.append(log(eValues[i-1]/eValues[i])/ log(dtValues[i-1]/dtValues[i])) 
-       
-    expectedRate = 2.0
-    calculatedRate = r[-1]
-    if not nt.assert_almost_equal(expectedRate,calculatedRate,places=1):
-                print version + ":","test_standingDampedSolution succeeded!"
+            u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
+                     dt=dt, T=T,BC = BC, version=version, 
+                     user_action=assert_no_error)                     
+           
+#            e = abs(u-ue).max()
+#            eValues.append(e)
+#            dtValues.append(dt)
+#
+#  
+#        m = len(dtValues)
+#        r = []   
+#        for i in range(1, m, 1):    
+#            r.append(log(eValues[i-1]/eValues[i])/ log(dtValues[i-1]/dtValues[i])) 
+#       
+#    expectedRate = 2.0
+#    calculatedRate = r[-1]
+#    if not nt.assert_almost_equal(expectedRate,calculatedRate,places=1):
+#                print version + ":","test_standingDampedSolution succeeded!"
   
 "*****************************************************************************"
 if __name__ == '__main__':
