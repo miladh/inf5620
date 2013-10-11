@@ -44,7 +44,7 @@ def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
     elif BC == 'neumann': 
         BC_type = neumann_BC
     else:
-        raise NotImplementedError     
+        raise ValueError('BC=%s' % BC)     
         
     
     if version == 'scalar':
@@ -52,7 +52,7 @@ def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
     elif version == 'vec': 
         advance = advance_vectorized
     else:
-        raise NotImplementedError 
+        raise ValueError('version=%s' % version)
         
     
     x = arange(-dx, Lx+2*dx, dx)  #mesh points, including ghost points
@@ -93,9 +93,9 @@ def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
     # set ghost values
     u_1 = BC_type(u_1, Ix, Iy)
            
-      
+    
     if user_action is not None:
-        user_action(u_1[1:-1,1:-1], x[1:-1], y[1:-1], t[0])
+        user_action(u_1[1:-1,1:-1], x[1:-1], y[1:-1], t,0)
         
         
     # Special formula for first time step
@@ -108,7 +108,7 @@ def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
         
         
     if user_action is not None:
-        user_action(u[1:-1,1:-1], x[1:-1], y[1:-1], t[1])
+        user_action(u[1:-1,1:-1], x[1:-1], y[1:-1], t, 1)
 
     u_2[:,:], u_1[:,:]= u_1, u 
     
@@ -121,11 +121,10 @@ def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
                     hx2, hy2, dt, setBC = BC_type)
                             
         if user_action is not None:
-            if user_action(u[1:-1,1:-1], x[1:-1], y[1:-1],t[n+1]):
+            if user_action(u[1:-1,1:-1], x[1:-1], y[1:-1],t, n+1):
                 break
 
         u_2[:,:], u_1[:,:] = u_1, u
-
 
     cpu_time = time.clock() - t0
     
@@ -258,7 +257,7 @@ def advance_vectorized(problem, u, u_1, u_2, x, y, t,
 
     return u
 "*****************************************************************************"
-def plot_u(u, x, y, t):
+def plot_u(u, x, y, t,n):
     """
     user_action function for solver.
     """
@@ -285,7 +284,7 @@ surfPlot = None
 surfFig = None
 surfAxes = None
 
-def plot_u_mayavi(u, x, y, t, disable_render=True,opacity=0.7,z_scale=0.5,doSleep=True,resetZoom=True):
+def plot_u_mayavi(u, x, y, t,n,disable_render=True,opacity=0.7,z_scale=0.5,doSleep=True,resetZoom=True):
     """
     user_action function for solver.
     """

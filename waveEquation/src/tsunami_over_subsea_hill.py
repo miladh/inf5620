@@ -144,13 +144,13 @@ def mkdir_p(path):
             pass
         else: raise
 
-def plot_u_with_hill(u,x,y,t):
+def plot_u_with_hill(u,x,y,t,n):
     global surfaceHill, problem, surfFig, frame
     mlab.options.offscreen = False
     if surfFig:
         surfFig.scene.disable_render = True
         
-    wm.plot_u_mayavi(u,x,y,t,z_scale=1.0,disable_render=False,opacity=0.85,doSleep=False,resetZoom=False)
+    wm.plot_u_mayavi(u,x,y,t,n,z_scale=1.0,disable_render=False,opacity=0.85,doSleep=False,resetZoom=False)
     surfFig = mlab.gcf()
     xv,yv = x[:,newaxis], y[newaxis,:]
     hill = -0.2 - problem.q(xv,yv) * 0.2
