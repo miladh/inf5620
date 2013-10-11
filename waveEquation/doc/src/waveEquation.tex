@@ -206,9 +206,9 @@
 
     % Document level variables
     \title{waveEquation}
-    \date{October 06, 2013}
+    \date{October 11, 2013}
     \release{}
-    \author{Milad H. Mobarhan \& Svenn-Arne Dragly}
+    \author{Unknown Author}
     \renewcommand{\releasename}{}
 
     % TODO: Add option for the user to specify a logo for his/her export.
@@ -284,9 +284,11 @@ The 2D versions of the two model PDEs, with and without variable
 coefficients, can with now with the aid of the index notation for
 differentiation be stated as \[
 \varrho u_{tt} + b u_{t}= (q u_x)_x + (q u_z)_z + (q u_z)_z + f
-\] Since this PDE contains a second-order derivative in time, we need
-two initial conditions; (1) the initial shape of the string, $I$, and
-(2) the initial velocity of the string, $V$;
+\] For our project, we will use $\varrho = 1$.
+
+Since this PDE contains a second-order derivative in time, we need two
+initial conditions; (1) the initial shape of the string, $I$, and (2)
+the initial velocity of the string, $V$;
 
 \begin{align*}
 u(x,y,0)&=I(x,y),\\
@@ -299,15 +301,18 @@ types:
 \begin{itemize}
 \itemsep1pt\parskip0pt\parsep0pt
 \item
-  $u$ is prescribed ($u=0$ or a known time variation for an incoming
-  wave)
+  Dirchlet boundary condition: $u$ is given for the boundaries ($u=0$ or
+  a known time variation for an incoming wave).
 \item
-  $\partial u/\partial n = \boldsymbol{n}\cdot\nabla u$ prescribed (zero
-  for reflecting boundaries)
+  Neumann boundary condition:
+  $\partial u/\partial n = \boldsymbol{n}\cdot\nabla u$ (zero for
+  reflecting boundaries).
 \item
-  An open boundary condition (also called radiation condition) is
-  specified to let waves travel undisturbed out of the domain.
-\end{itemize}\begin{center}\rule{3in}{0.4pt}\end{center}
+  Open boundary condition (also called radiation condition): Specified
+  to let waves travel undisturbed out of the domain.
+\end{itemize}
+
+We will in this project focus on the Neumann boundary condition.\begin{center}\rule{3in}{0.4pt}\end{center}
 
 \subsection{Discretization}
 
@@ -319,10 +324,37 @@ between the mesh points. Our mesh points are
 x_i = i\Delta x,\ i=0,\ldots,N_x,\quad \\ 
 y_j = j\Delta y,\ j=0,\ldots,N_y,\quad \\
 t_i = n\Delta t,\ n=0,\ldots,N_t{\thinspace .}
-\] The solution $u(x,y,t)$ is sought at the mesh points. We introduce
-the mesh function $u_{i,j}^n$, which approximates the exact solution at
-the mesh point $(x_i,y_j,t_n)$ for $i=0,\ldots,N_x$, $j=0,\ldots,N_y$
-and $n=0,\ldots,N_t$.\subsubsection{Discretizing the variable coefficient}
+\]
+
+Note that this results in a number of $N_x + 1$ mesh points in
+$x$-direction, and $N_y + 1$ and $N_n + 1$ for $y$ and $t$. Our goal is
+to find the solution $u(x,y,t)$ that fulfills the above stated wave
+equation for all mesh points. We introduce the mesh function
+$u_{i,j}^n$, which approximates the exact solution at the mesh point
+$(x_i,y_j,t_n)$ for $i=0,\ldots,N_x$, $j=0,\ldots,N_y$ and
+$n=0,\ldots,N_t$.\subsubsection{Replacing derivatives by finite differences}
+
+The second-order derivatives can be replaced by central differences. The
+most widely used difference approximation of the second-order derivative
+is
+
+\[
+\frac{\partial^2}{\partial t^2}u(x_i,y_j,t_n)\approx
+\frac{u_{i,j}^{n+1} - 2u_{i,j}^n + u^{n-1}_{i,j}}{\Delta t^2}{\thinspace .}
+\]
+
+It is convenient to introduce the finite difference operator notation
+
+\[
+[D_tD_t u]^n_{i,j} = \frac{u_{i,j}^{n+1} - 2u_{i,j}^n + u^{n-1}_{i,j}}{\Delta t^2}{\thinspace .}
+\]
+
+The first-order derivative in time in the damping term can be
+approximated by
+
+\[
+[D_{2t} u]^n_{i,j} = \frac{u_{i,j}^{n+1} - u^{n-1}_{i,j}}  {2\Delta t}{\thinspace .}
+\]\subsubsection{Discretizing the variable coefficient}
 
 The principal idea is to first discretize the outer derivative. We
 define
@@ -338,7 +370,9 @@ $\phi$:
 \approx \frac{\phi^x_{i+\frac{1}{2}} - \phi^x_{i-\frac{1}{2}}}{\Delta x}
 = [D_x\phi^x]^n_i
 \thinspace .
-\] Then discretize
+\]
+
+We then discretize $\phi^x$ further as
 
 \[
 \phi^x_{i+\frac{1}{2}}  = q_{i+\frac{1}{2}}
@@ -372,16 +406,20 @@ $\phi$:
      \approx [D_xq D_x u]^n_i
 \]
 
-Similarly we have
+Similarly for
+
+\[
+\phi^y = q(x,y)
+\frac{\partial u}{\partial y}.
+\]
+
+we have
 
 \[
 \left[
      \frac{\partial}{\partial y}\left( q
      \frac{\partial u}{\partial y}\right)\right]^n_i
      \approx [D_yq D_y u]^n_i
-\] for \[
-\phi^y = q(x,y)
-\frac{\partial u}{\partial y}.
 \]
 
 In order to compute $[D_xq D_x u]^n_i$ and $[D_yq D_y u]^n_i$ we need to
@@ -400,26 +438,9 @@ q_{i+\frac{1}{2},j} \approx
 q_{i-\frac{1}{2},j} \approx
      \frac{1}{2}\left(q_{i,j}+ q_{i-1,j}\right) =
      [\overline{q}^{x}]_{i-\frac{1}{2},j},  
-\] which we are going to use in the following.\subsubsection{Replacing derivatives by finite differences}
-
-The second-order derivatives can be replaced by central differences. The
-most widely used difference approximation of the second-order derivative
-is
-
-\[
-\frac{\partial^2}{\partial t^2}u(x_i,y_j,t_n)\approx
-\frac{u_{i,j}^{n+1} - 2u_{i,j}^n + u^{n-1}_{i,j}}{\Delta t^2}{\thinspace .}
-\] It is convenient to introduce the finite difference operator notation
-\[
-[D_tD_t u]^n_{i,j} = \frac{u_{i,j}^{n+1} - 2u_{i,j}^n + u^{n-1}_{i,j}}{\Delta t^2}{\thinspace .}
 \]
 
-The first-order derivative in time in the damping term can be
-approximated by
-
-\[
-[D_{2t} u]^n_{i,j} = \frac{u_{i,j}^{n+1} - u^{n-1}_{i,j}}  {2\Delta t}{\thinspace .}
-\]\subsubsection{Algebraic version of the initial conditions}
+which we are going to use in this project.\subsubsection{Algebraic version of the initial conditions}
 
 The initial conditions are given as
 
@@ -428,9 +449,15 @@ u(x,y,t_0)&=I(x,y),\\
 u_t(x,y,t_0)&=V(x,y).
 \end{align*}
 
-The first condition can be computed by \[
+The first condition can be computed by
+
+\[
 u_i^0 = I(x_i),\quad i=0,\ldots,N_x{\thinspace .}
-\] For the second one we use a centered difference of type \[
+\]
+
+For the second one we use a centered difference of type
+
+\[
 \frac{\partial}{\partial t} u(x_i,y_j,t_0)\approx
 \frac{u^1_{i,j} - u^{-1}_{i,j}}{2\Delta t} = [D_{2t} u]^0_{i,j} = V(x_i,y_j).
 \]\subsubsection{Algebraic version of the PDE}
@@ -443,8 +470,10 @@ The PDE with variable coefficients is discretized term by term:
 [\varrho D_tD_t u + b D_{2t} u  = (D_x\overline{q}^x D_x u +
 D_y\overline{q}^y D_yu ) + f]^n_{i,j}
 \thinspace .
-\] When written out and solved for the unknown $u^{n+1}_{i,j}$ one gets
-the scheme
+\]
+
+When written out and solved for the unknown $u^{n+1}_{i,j}$ one gets the
+scheme
 
 \begin{align*}u^{n+1}_{i,j} &= 
 \Bigg\{
@@ -462,14 +491,20 @@ undefined quantity outside the time mesh (and the time domain). However,
 we can use the initial condition to arrive at a special formula for
 $u^1_{i,j}$. From initial condition we have
 
+\[ V_{i,j} = [D_{2t} u]_{i,j}^0 = \frac{u_{i,j}^{1} - u_{i,j}^{-1}}{2\Delta t} \]
+
+which may be rewritten to find $u_{i,j}^{-1}$ as
+
 \[
- u^{-1}_{i,j} =u^1_{i,j} -  2\Delta tV.
-\] Inserting this into the algebraic version of the PDE equation for
-$n=0$ gives:
+ u^{-1}_{i,j} =u^1_{i,j} -  2\Delta t V_{i,j}.
+\]
+
+Inserting this into the algebraic version of the PDE equation for $n=0$
+gives:
 
 \begin{align*}u^{1}_{i,j} &= 
 \Bigg\{
-2u^{0}_{i,j} + \left( u^1_{i,j} -  2\Delta tV\right)\left[\frac{b \Delta t}{2\varrho_{i,j}} - 1\right]+\frac{\Delta t^2}{\varrho_{i,j}} f^0_{i,j} \\
+2u^{0}_{i,j} + \left( u^1_{i,j} -  2\Delta t V_{i,j} \right)\left[\frac{b \Delta t}{2\varrho_{i,j}} - 1\right]+\frac{\Delta t^2}{\varrho_{i,j}} f^0_{i,j} \\
 &+ \frac{1}{\varrho_{i,j}}\frac{\Delta t^2}{\Delta x^2} 
 \left[ \frac{1}{2}(q_{i,j} + q_{i+1,j})(u^{0}_{i+1,j} - u^{0}_{i,j}) - \frac{1}{2}(q_{i-1,j} + q_{i,j})(u^{0}_{i,j} - u^{0}_{i-1,j})\right] \\
 &+ \frac{1}{\varrho_{i,j}}\frac{\Delta t^2}{\Delta y^2} 
@@ -481,13 +516,13 @@ Thus, the special formula for $u^1_{i,j}$ is
 
 \begin{align*}
 u^{1}_{i,j} &= 
-\Bigg\{
-2u^{0}_{i,j}  -  2\Delta tV\left[\frac{b \Delta t}{2\varrho_{i,j}} - 1\right]+\frac{\Delta t^2}{\varrho_{i,j}} f^0_{i,j} \\
+\frac{1}{2}\Bigg\{
+2u^{0}_{i,j}  -  2\Delta t V_{i,j} \left[\frac{b \Delta t}{2\varrho_{i,j}} - 1\right]+\frac{\Delta t^2}{\varrho_{i,j}} f^0_{i,j} \\
 &+ \frac{1}{\varrho_{i,j}}\frac{\Delta t^2}{\Delta x^2} 
 \left[ \frac{1}{2}(q_{i,j} + q_{i+1,j})(u^{0}_{i+1,j} - u^{0}_{i,j}) - \frac{1}{2}(q_{i-1,j} + q_{i,j})(u^{0}_{i,j} - u^{0}_{i-1,j})\right] \\
 &+ \frac{1}{\varrho_{i,j}}\frac{\Delta t^2}{\Delta y^2} 
 \left[ \frac{1}{2}(q_{i,j} + q_{i,j+1})(u^{0}_{i,j+1} - u^{0}_{i,j}) -\frac{1}{2}(q_{i,j-1} + q_{i,j})(u^{0}_{i,j} - u^{0}_{i,j-1})\right]
-\Bigg\} \left(\frac{1}{1+ \frac{b\Delta t}{2\varrho_{i,j} }}\right )\left(\frac{1}{2-\frac{b \Delta t}{2\varrho_{i,j}}} \right)
+\Bigg\}
 \thinspace .\end{align*}\begin{center}\rule{3in}{0.4pt}\end{center}
 
 \subsection{Boundary condition}
@@ -631,7 +666,733 @@ R^n_{i,j} = {\mathcal{O}(\Delta x^2)} + {\mathcal{O}(\Delta y^2)}+\varrho\left(\
 
 The scheme is of second-order in time and space. The key ingredients for
 second order are the centered differences and the arithmetic mean for
-$q$: all those building blocks feature second-order accuracy.
+$q$: all those building blocks feature second-order accuracy.\begin{center}\rule{3in}{0.4pt}\end{center}
+
+\subsection{Verification with cubic solution}
+
+We assume an exact solution
+
+\[u_e(x,y,t) = X(x)Y(y)T(t)\]
+
+where $X$, $Y$ and $T$ are polynomials of degree three or less. A
+solution that obeys the boundary condition of a vanishing normal
+derivative is found by setting
+
+\[X(x) = (2x^3 - 3 L_x x^2)\] \[Y(y) = (2y^3 - 3 L_x y^2)\]
+
+and
+
+\[T(t) = t\]
+
+The final choice of $T(t) = t$ simplifies the equation. Inserting this
+solution into the wave equation with $q(x,y)=q$ and $b=0$ we find
+
+\[f(x,y,t) = - q (12x - 6L_x) Y(y) T(t) - q X(x)(12y - 6L_y) T(t)\]
+
+which may now be used to verify the cubic solution.
+
+On the boundary, we need to check if we need to compensate for our
+discrete implementation of the boundary condition
+$\frac{\partial}{\partial n}u_e$. This was implemented as
+
+\[ \left [ D_{2x} u \right]_{i}^n = 0 \]
+
+for $i=0$ and $i=N_x$. This does not hold for our cubic solution,
+because
+
+\begin{align*} 
+   \left [ D_{2x} u_e \right ]_{i}^n &= \frac{u_e(x_i + \Delta x) - u(x_i - \Delta x)}{2 \Delta x} \\
+                                     &= (6x_i^2 - 6 L_x x_i + 2 \Delta x^2)
+\end{align*}
+
+On the boundaries, this reduces to
+
+\[
+\left [ D_{2x} u_e \right ]_{i}^n = 2 \Delta x^2, \qquad \ i = \{0,N_x\}
+\]
+
+We now have that, for the ghost points
+
+\begin{align*}
+    u_{-1}^n &= u_{1}^n - 2 \Delta x^2 \\
+    u_{N_x + 1}^n &= u_{N_x-1}^n + 2 \Delta x^2
+\end{align*}
+
+Which together with the iterative scheme gives us a correction to $f$,
+which we will call $g$, so that on the boundary our source term is
+$\hat f = f + g$. This makes the solution exact for the discrete
+equation on the boundaries too:
+
+\begin{align*}
+    g_{-1}^n &= - 4 \Delta x T(t) Y(y) q \\
+    g_{N_x + 1}^n &= 4 \Delta x T(t) Y(y) q
+\end{align*}
+
+This is implemented in the code with a check for vectorized or scalar
+versions of $x$ and $y$ when calling $f$, and the correction is then
+added as $\hat f = f + g$ if we are on the boundary.
+
+This is done in the file tests/test\_cubic.py.\begin{center}\rule{3in}{0.4pt}\end{center}
+
+\subsection{Standing, damped waves}
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}57{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{k+kn}{from} \PY{n+nn}{sympy} \PY{k+kn}{import} \PY{o}{*}
+\PY{n}{init\PYZus{}printing}\PY{p}{(}\PY{n}{use\PYZus{}latex}\PY{o}{=}\PY{n+nb+bp}{True}\PY{p}{)}
+\PY{n}{A}\PY{p}{,}\PY{n}{B}\PY{p}{,}\PY{n}{b}\PY{p}{,}\PY{n}{w}\PY{p}{,}\PY{n}{kx}\PY{p}{,}\PY{n}{ky}\PY{p}{,} \PY{n}{q} \PY{o}{=} \PY{n}{symbols}\PY{p}{(}\PY{l+s}{\PYZdq{}}\PY{l+s}{A,B,b,w,k\PYZus{}x,k\PYZus{}y,q}\PY{l+s}{\PYZdq{}}\PY{p}{)}
+\PY{n}{x}\PY{p}{,}\PY{n}{y}\PY{p}{,}\PY{n}{t} \PY{o}{=} \PY{n}{symbols}\PY{p}{(}\PY{l+s}{\PYZdq{}}\PY{l+s}{x,y,t}\PY{l+s}{\PYZdq{}}\PY{p}{)}
+\PY{n}{u} \PY{o}{=} \PY{p}{(}\PY{n}{A}\PY{o}{*}\PY{n}{cos}\PY{p}{(}\PY{n}{w}\PY{o}{*}\PY{n}{t}\PY{p}{)}\PY{o}{+}\PY{n}{B}\PY{o}{*}\PY{n}{sin}\PY{p}{(}\PY{n}{w}\PY{o}{*}\PY{n}{t}\PY{p}{)}\PY{p}{)}\PY{o}{*}\PY{n}{exp}\PY{p}{(}\PY{o}{\PYZhy{}}\PY{n}{b}\PY{o}{*}\PY{n}{t}\PY{p}{)}\PY{o}{*}\PY{n}{cos}\PY{p}{(}\PY{n}{kx}\PY{o}{*}\PY{n}{x}\PY{p}{)}\PY{o}{*}\PY{n}{cos}\PY{p}{(}\PY{n}{ky}\PY{o}{*}\PY{n}{y}\PY{p}{)}
+\PY{n}{display}\PY{p}{(}\PY{n}{u}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-out-prompt}Out\hspace{4pt}{[}57{]}:\hspace{4pt}}\\*
+                \vspace{-2.55\baselineskip}\begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+\begin{alltt}(A*cos(t*w) + B*sin(t*w))*exp(-b*t)*cos(k\_x*x)*cos(k\_y*y)\end{alltt}
+
+            \end{InvisibleVerbatim}
+            
+        
+    
+
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}2{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{n}{u\PYZus{}t} \PY{o}{=} \PY{n}{diff}\PY{p}{(}\PY{n}{u}\PY{p}{,}\PY{n}{t}\PY{p}{)}\PY{o}{.}\PY{n}{simplify}\PY{p}{(}\PY{p}{)}
+\PY{n}{display}\PY{p}{(}\PY{n}{u\PYZus{}t}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$\left(- A b \cos{\left (t w \right )} - A w \sin{\left (t w \right )} - B b \sin{\left (t w \right )} + B w \cos{\left (t w \right )}\right) e^{- b t} \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )}$$
+            \end{InvisibleVerbatim}
+            
+        
+    
+
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}3{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{n}{u\PYZus{}tt} \PY{o}{=} \PY{n}{diff}\PY{p}{(}\PY{n}{u\PYZus{}t}\PY{p}{,}\PY{n}{t}\PY{p}{)}\PY{o}{.}\PY{n}{simplify}\PY{p}{(}\PY{p}{)}
+\PY{n}{display}\PY{p}{(}\PY{n}{u\PYZus{}tt}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$\left(A b^{2} \cos{\left (t w \right )} + 2 A b w \sin{\left (t w \right )} - A w^{2} \cos{\left (t w \right )} + B b^{2} \sin{\left (t w \right )} - 2 B b w \cos{\left (t w \right )} - B w^{2} \sin{\left (t w \right )}\right) e^{- b t} \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )}$$
+            \end{InvisibleVerbatim}
+            
+        
+    
+
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}23{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{n}{u\PYZus{}tt}\PY{o}{.}\PY{n}{subs}\PY{p}{(}\PY{n}{t}\PY{p}{,} \PY{l+m+mi}{0}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-out-prompt}Out\hspace{4pt}{[}23{]}:\hspace{4pt}}\\*
+                \vspace{-2.55\baselineskip}\begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$\left(A b^{2} - A w^{2} - 2 B b w\right) \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )}$$
+            \end{InvisibleVerbatim}
+            
+        
+    
+
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}24{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{n}{u\PYZus{}t}\PY{o}{.}\PY{n}{subs}\PY{p}{(}\PY{n}{t}\PY{p}{,}\PY{l+m+mi}{0}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-out-prompt}Out\hspace{4pt}{[}24{]}:\hspace{4pt}}\\*
+                \vspace{-2.55\baselineskip}\begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$\left(- A b + B w\right) \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )}$$
+            \end{InvisibleVerbatim}
+            
+        
+    
+
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}4{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{n}{u\PYZus{}xx} \PY{o}{=} \PY{n}{diff}\PY{p}{(}\PY{n}{u}\PY{p}{,}\PY{n}{x}\PY{p}{,}\PY{n}{x}\PY{p}{)}\PY{o}{.}\PY{n}{simplify}\PY{p}{(}\PY{p}{)}
+\PY{n}{u\PYZus{}yy} \PY{o}{=} \PY{n}{diff}\PY{p}{(}\PY{n}{u}\PY{p}{,}\PY{n}{y}\PY{p}{,}\PY{n}{y}\PY{p}{)}\PY{o}{.}\PY{n}{simplify}\PY{p}{(}\PY{p}{)}
+\PY{n}{display}\PY{p}{(}\PY{n}{u\PYZus{}xx}\PY{p}{,}\PY{n}{u\PYZus{}yy}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$k_{x}^{2} \left(- A \cos{\left (t w \right )} - B \sin{\left (t w \right )}\right) e^{- b t} \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )}$$
+            \end{InvisibleVerbatim}
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$k_{y}^{2} \left(- A \cos{\left (t w \right )} - B \sin{\left (t w \right )}\right) e^{- b t} \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )}$$
+            \end{InvisibleVerbatim}
+            
+        
+    
+
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}25{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{n}{u\PYZus{}xx}\PY{o}{.}\PY{n}{subs}\PY{p}{(}\PY{n}{t}\PY{p}{,}\PY{l+m+mi}{0}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-out-prompt}Out\hspace{4pt}{[}25{]}:\hspace{4pt}}\\*
+                \vspace{-2.55\baselineskip}\begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$- A k_{x}^{2} \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )}$$
+            \end{InvisibleVerbatim}
+            
+        
+    
+
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}26{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{n}{u\PYZus{}yy}\PY{o}{.}\PY{n}{subs}\PY{p}{(}\PY{n}{t}\PY{p}{,}\PY{l+m+mi}{0}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-out-prompt}Out\hspace{4pt}{[}26{]}:\hspace{4pt}}\\*
+                \vspace{-2.55\baselineskip}\begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$- A k_{y}^{2} \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )}$$
+            \end{InvisibleVerbatim}
+            
+        
+    
+
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}59{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{n}{I} \PY{o}{=} \PY{n}{u}\PY{o}{.}\PY{n}{subs}\PY{p}{(}\PY{n}{t}\PY{p}{,}\PY{l+m+mi}{0}\PY{p}{)}
+\PY{n}{V} \PY{o}{=} \PY{n}{u\PYZus{}t}\PY{o}{.}\PY{n}{subs}\PY{p}{(}\PY{n}{t}\PY{p}{,}\PY{l+m+mi}{0}\PY{p}{)}
+\PY{n}{display}\PY{p}{(}\PY{n}{I}\PY{p}{,}\PY{n}{V}\PY{p}{)}
+
+\PY{n}{B\PYZus{}tmp} \PY{o}{=} \PY{n}{solve}\PY{p}{(}\PY{n}{V}\PY{p}{,}\PY{n}{B}\PY{p}{)}
+\PY{n}{display}\PY{p}{(}\PY{l+s}{\PYZdq{}}\PY{l+s}{B = }\PY{l+s}{\PYZdq{}}\PY{p}{,} \PY{n}{B\PYZus{}tmp}\PY{p}{)}
+\PY{n}{ccode}\PY{p}{(}\PY{n}{V}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$A \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )}$$
+            \end{InvisibleVerbatim}
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$\left(- A b + B w\right) \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )}$$
+            \end{InvisibleVerbatim}
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+\begin{alltt}B =\end{alltt}
+
+            \end{InvisibleVerbatim}
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$\begin{bmatrix}\frac{A b}{w}\end{bmatrix}$$
+            \end{InvisibleVerbatim}
+            
+                \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-out-prompt}Out\hspace{4pt}{[}59{]}:\hspace{4pt}}\\*
+                \vspace{-2.55\baselineskip}\begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+\begin{alltt}(-A*b + B*w)*cos(k\_x*x)*cos(k\_y*y)\end{alltt}
+
+            \end{InvisibleVerbatim}
+            
+        
+    
+
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}52{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{n}{eq}  \PY{o}{=} \PY{n}{u\PYZus{}tt} \PY{o}{+} \PY{n}{b}\PY{o}{*}\PY{n}{u\PYZus{}t} \PY{o}{\PYZhy{}} \PY{n}{q}\PY{o}{*}\PY{n}{u\PYZus{}xx} \PY{o}{\PYZhy{}} \PY{n}{q}\PY{o}{*}\PY{n}{u\PYZus{}yy}
+\PY{n}{eq\PYZus{}t0} \PY{o}{=} \PY{n}{eq}\PY{o}{.}\PY{n}{subs}\PY{p}{(}\PY{n}{B}\PY{p}{,}\PY{n}{B\PYZus{}tmp}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{p}{)}\PY{o}{.}\PY{n}{subs}\PY{p}{(}\PY{n}{t}\PY{p}{,}\PY{l+m+mi}{0}\PY{p}{)}\PY{o}{.}\PY{n}{simplify}\PY{p}{(}\PY{p}{)}
+\PY{n}{display}\PY{p}{(}\PY{n}{eq}\PY{p}{,} \PY{n}{eq\PYZus{}t0}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$b \left(- A b \cos{\left (t w \right )} - A w \sin{\left (t w \right )} - B b \sin{\left (t w \right )} + B w \cos{\left (t w \right )}\right) e^{- b t} \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )} - k_{x}^{2} q \left(- A \cos{\left (t w \right )} - B \sin{\left (t w \right )}\right) e^{- b t} \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )} - k_{y}^{2} q \left(- A \cos{\left (t w \right )} - B \sin{\left (t w \right )}\right) e^{- b t} \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )} + \left(A b^{2} \cos{\left (t w \right )} + 2 A b w \sin{\left (t w \right )} - A w^{2} \cos{\left (t w \right )} + B b^{2} \sin{\left (t w \right )} - 2 B b w \cos{\left (t w \right )} - B w^{2} \sin{\left (t w \right )}\right) e^{- b t} \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )}$$
+            \end{InvisibleVerbatim}
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$A \left(- b^{2} + k_{x}^{2} q + k_{y}^{2} q - w^{2}\right) \cos{\left (k_{x} x \right )} \cos{\left (k_{y} y \right )}$$
+            \end{InvisibleVerbatim}
+            
+        
+    
+
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}53{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{n}{w\PYZus{}tmp} \PY{o}{=} \PY{n}{solve}\PY{p}{(}\PY{n}{eq\PYZus{}t0}\PY{p}{,}\PY{n}{w}\PY{p}{)}
+\PY{n}{w\PYZus{}tmp}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-out-prompt}Out\hspace{4pt}{[}53{]}:\hspace{4pt}}\\*
+                \vspace{-2.55\baselineskip}\begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+$$\begin{bmatrix}- \sqrt{- b^{2} + k_{x}^{2} q + k_{y}^{2} q}, & \sqrt{- b^{2} + k_{x}^{2} q + k_{y}^{2} q}\end{bmatrix}$$
+            \end{InvisibleVerbatim}
+            
+        
+    
+\subsection{Physical problem}
+
+We investigated a couple of physical problems, with the goal of
+simulating water waves on different types of subsea geometries. All
+simulations were performed over a total time of $T=5$ and with a
+timestep $\Delta t = 0.005$ on a domain of $L_x = L_y = 1$. A selected
+few of the results from these simulations are shown below:
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}54{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{k+kn}{from} \PY{n+nn}{IPython.display} \PY{k+kn}{import} \PY{n}{YouTubeVideo}
+\PY{k+kn}{from} \PY{n+nn}{IPython.display} \PY{k+kn}{import} \PY{n}{display}
+\PY{k+kn}{from} \PY{n+nn}{IPython.core.display} \PY{k+kn}{import} \PY{n}{Latex}
+\PY{k}{def} \PY{n+nf}{youTubeVideo}\PY{p}{(}\PY{n}{videoID}\PY{p}{,} \PY{n}{width}\PY{o}{=}\PY{l+m+mi}{640}\PY{p}{,} \PY{n}{height}\PY{o}{=}\PY{l+m+mi}{480}\PY{p}{)}\PY{p}{:}
+    \PY{n}{display}\PY{p}{(}\PY{n}{YouTubeVideo}\PY{p}{(}\PY{n}{videoID}\PY{p}{,} \PY{n}{width}\PY{o}{=}\PY{n}{width}\PY{p}{,} \PY{n}{height}\PY{o}{=}\PY{n}{height}\PY{p}{)}\PY{p}{)}
+    \PY{n}{display}\PY{p}{(}\PY{n}{Latex}\PY{p}{(}\PY{l+s}{\PYZdq{}}\PY{l+s}{Can}\PY{l+s}{\PYZsq{}}\PY{l+s}{t see the video? Click here: }\PY{l+s}{\PYZbs{}}\PY{l+s}{url\PYZob{}http://youtube.com/watch?v=}\PY{l+s}{\PYZdq{}} \PY{o}{+} \PY{n}{videoID} \PY{o}{+} \PY{l+s}{\PYZdq{}}\PY{l+s}{\PYZcb{}}\PY{l+s}{\PYZdq{}}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+Gaussian sphere wave over gaussian elliptic hill. $\Delta t = 0.005$,
+$\Delta x = \Delta y = 0.01$:
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}55{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{n}{youTubeVideo}\PY{p}{(}\PY{l+s}{\PYZdq{}}\PY{l+s}{SWDLRVmWn1U}\PY{l+s}{\PYZdq{}}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+\begin{alltt}<IPython.lib.display.YouTubeVideo at 0x283d610>\end{alltt}
+
+            \end{InvisibleVerbatim}
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+Can't see the video? Click here: \url{http://youtube.com/watch?v=SWDLRVmWn1U}
+            \end{InvisibleVerbatim}
+            
+        
+    
+Wall wave over gaussian spherical hill. $\Delta t = 0.005$,
+$\Delta x = \Delta y = 0.01$:
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}53{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{n}{youTubeVideo}\PY{p}{(}\PY{l+s}{\PYZdq{}}\PY{l+s}{G\PYZus{}Pmdh\PYZhy{}uptU}\PY{l+s}{\PYZdq{}}\PY{p}{,} \PY{n}{width}\PY{o}{=}\PY{n}{youTubeWidth}\PY{p}{,} \PY{n}{height}\PY{o}{=}\PY{n}{youTubeHeight}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+\begin{alltt}<IPython.lib.display.YouTubeVideo at 0x283de10>\end{alltt}
+
+            \end{InvisibleVerbatim}
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+\url{http://youtube.com/watch?v=G_Pmdh-uptU}
+            \end{InvisibleVerbatim}
+            
+        
+    
+Wall wave over gaussian spherical cliff. $\Delta t = 0.005$,
+$\Delta x = \Delta y = 0.01$:
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}12{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{n}{youTubeVideo}\PY{p}{(}\PY{l+s}{\PYZdq{}}\PY{l+s}{IlQwI2azEfU}\PY{l+s}{\PYZdq{}}\PY{p}{,} \PY{n}{width}\PY{o}{=}\PY{n}{youTubeWidth}\PY{p}{,} \PY{n}{height}\PY{o}{=}\PY{n}{youTubeHeight}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-out-prompt}Out\hspace{4pt}{[}12{]}:\hspace{4pt}}\\*
+                \vspace{-2.55\baselineskip}\begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+\begin{alltt}<IPython.lib.display.YouTubeVideo at 0x26511d0>\end{alltt}
+
+            \end{InvisibleVerbatim}
+            
+        
+    
+
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+
+\end{Verbatim}
+
+            
+                \vspace{0.3\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
         
 
         \renewcommand{\indexname}{Index}
