@@ -328,17 +328,16 @@ def test_standingUndamped():
 
     print "------------------test standing undamped----------------"   
     
-    dt_0=0.5; T = 3; Lx=10; Ly=10; dx_0=1.0; dy_0=1.0
+    dt_0=0.1; T = 3; Lx=10; Ly=10; dx_0=4.0; dy_0=4.0
     b = 0.0; A = 0.05; w=10.0; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
     BC = "neumann" ; 
     versions = ["vec","scalar"]  
 
-    for version in versions:
-        problem = case_standingUndamped(b,A,w,kx,ky)
-        
-        for i in range(0,5):
+    for version in versions:        
+        for i in range(0,6):
+            problem = case_standingUndamped(b,A,w,kx,ky)
             r  = 2**(-i)
-            dt = dt_0; dx = dx_0; dy = dy_0
+            dt = r*dt_0; dx = r*dx_0; dy = r*dy_0
             u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
                      dt=dt, T=T,BC = BC, version=version, 
                      user_action=max_error)
@@ -404,7 +403,7 @@ def test_standingDamped():
     print "------------------test standing damped----------------"   
     
     dt_0=0.5; T = 10; Lx=10; Ly=10; dx_0=1.0; dy_0=1.0
-    b = 0.0001; A = 0.05; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
+    b = 0.1; A = 0.05; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
     BC = "neumann" ; 
 #    versions = ["vec","scalar"]
     versions = ["vec"]
@@ -413,11 +412,11 @@ def test_standingDamped():
     for version in versions:
         eValues  = []
         dtValues  = []
-        problem = case_standingDamped(b,A,kx,ky)
+
         for i in range(0,5):
+            problem = case_standingDamped(b,A,kx,ky)
             r  = 2**(-i)
-            dt = r*dt_0; 
-            dx = r*dx_0; dy = r*dy_0
+            dt = r*dt_0; dx = r*dx_0; dy = r*dy_0
             u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
                      dt=dt, T=T,BC = BC, version=version, 
                      user_action=max_error)                     
@@ -431,10 +430,10 @@ def test_standingDamped():
         for i in range(1, m, 1):    
             r.append(log(eValues[i-1]/eValues[i])/ log(dtValues[i-1]/dtValues[i])) 
        
-    expectedRate = 2.0
-    calculatedRate = r[-1]
-    if not nt.assert_almost_equal(expectedRate,calculatedRate,places=1):
-                print version + ":","test_standingDampedSolution succeeded!"
+        expectedRate = 2.0
+        calculatedRate = r[-1]
+        if not nt.assert_almost_equal(expectedRate,calculatedRate,places=1):
+                    print version + ":","test_standingDampedSolution succeeded!"
                 
                 
 "*****************************************************************************" 
@@ -505,11 +504,10 @@ def test_manufacturedSolution():
     for version in versions:
         eValues  = []
         dtValues  = []
-        problem = case_manufacturedSolution(b,w,A,B,kx,ky)
         for i in range(0,5):
+            problem = case_manufacturedSolution(b,w,A,B,kx,ky)
             r  = 2**(-i)
-            dt = r*dt_0; 
-            dx = r*dx_0; dy = r*dy_0
+            dt = r*dt_0; dx = r*dx_0; dy = r*dy_0
             u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
                      dt=dt, T=T,BC = BC, version=version, 
                      user_action=max_error)                     
@@ -522,16 +520,15 @@ def test_manufacturedSolution():
         r = []   
         for i in range(1, m, 1):    
             r.append(log(eValues[i-1]/eValues[i])/ log(dtValues[i-1]/dtValues[i])) 
-       
-    expectedRate = 2.0
-    calculatedRate = r[-1]
-    if not nt.assert_almost_equal(expectedRate,calculatedRate,places=1):
-                print version + ":","test_manufacturedSolution succeeded!"
+        expectedRate = 2.0
+        calculatedRate = r[-1]
+        if not nt.assert_almost_equal(expectedRate,calculatedRate,places=1):
+                    print version + ":","test_manufacturedSolution succeeded!"
 "*****************************************************************************"
 if __name__ == '__main__':
 #    test_constantSolution()
 #    test_cubicSolution()
 #    test_plugwaveSolution()
     test_standingUndamped()
-    test_standingDamped()
-    test_manufacturedSolution()
+#    test_standingDamped()
+#    test_manufacturedSolution()
