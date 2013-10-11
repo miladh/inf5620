@@ -17,15 +17,16 @@ close("all")
 def stabilityCriterion(problem,xv,yv,dx,dy,dt):
     q = zeros((xv.shape[0],yv.shape[1]))
     q[:,:] = problem.q(xv, yv)
+    if abs(q.max()) < 1e-12:
+        return dt
+        
     dtx = float(dx)/q.max()
     dty = float(dy)/q.max()
     
     if dt < min(dtx,dty):
-        pass
+        return dt
     else:
-        dt = min(dtx,dty)
-    
-    return dt
+        return min(dtx,dty)
     
 "*****************************************************************************"
 def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
@@ -284,37 +285,40 @@ surfPlot = None
 surfFig = None
 surfAxes = None
 
-def plot_u_mayavi(u, x, y, t, disable_render=True,opacity=0.7,z_scale=0.5,doSleep=True):
+def plot_u_mayavi(u, x, y, t, disable_render=True,opacity=0.7,z_scale=0.5,doSleep=True,resetZoom=True):
     """
     user_action function for solver.
     """
     global surfPlot, surfFig, surfAxes
     normalizationFactor = 1 / z_scale
+    if not surfFig:        
+        surfFig = mlab.figure(size=(1280,720),bgcolor=(0,0,0))
     if not surfPlot:
-        surfFig = mlab.figure(size=(1024,768),bgcolor=(0,0,0))
         # Set up temporary plot for scaling
         X,Y = meshgrid(x,y)
-        u = sin(X)
-        surfPlot = mlab.surf(x,y,u, warp_scale=1, opacity=opacity, colormap="Blues", vmin=-0.2, vmax=0.7)
+        utest = 0.5 * sin(20 * X) + 0.5 * cos(20 * Y)
+        surfPlot = mlab.surf(x,y,utest, opacity=opacity, colormap="Blues", vmin=-0.2, vmax=0.7,
+                             extent=[x.min(), x.max(), y.min(), y.max(), -0.1, 0.1])
         # Set reverse colormap
         lut = surfPlot.module_manager.scalar_lut_manager.lut.table.to_array()
         ilut = lut[::-1]
         surfPlot.module_manager.scalar_lut_manager.lut.table = ilut
-        surfAxes = mlab.axes(nb_labels=5,
-                             extent=[x.min(), x.max(), y.min(), y.max(), -1, 1])
+        #surfAxes = mlab.axes(nb_labels=5, opacity=0,
+        #                     extent=[x.min(), x.max(), y.min(), y.max(), -0.4, 0.4])
         
     if disable_render:
         surfFig.scene.disable_render = True
     surfFig.scene.anti_aliasing_frames = 0
     surfPlot.mlab_source.set(x=x, y=y, scalars=u*normalizationFactor)
     #surfAxes.extent=[x.min(), x.max(), y.min(), y.max(), -0.1, 0.1]
-    surfFig.scene.reset_zoom()
     if disable_render:
         surfFig.scene.disable_render = False
     if doSleep:
         if t == 0:
             time.sleep(0.5)
         time.sleep(0.02)
+    if resetZoom:        
+        surfFig.scene.reset_zoom()
 "*****************************************************************************"
 def viz(problem, Lx, Ly, dx, dy, dt, T, 
         version=None ,BC=None, animate=True, pltool="matplotlib"):
