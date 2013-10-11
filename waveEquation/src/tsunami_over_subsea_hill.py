@@ -61,13 +61,19 @@ class TsunamiProblem(wm.Problem):
     def q(self,x,y):
         if self.hill == "gaussian_sphere":
             x0 = self.Lx / 3
-            y0 = self.Ly * 3. / 4.
+            y0 = self.Ly * 6. / 10.
             Is = self.Lx * 0.3
             #return self.rectangularHill(x,y,0.8)
             return self.gaussian2D(x,y,x0=x0, y0=y0, I0=1, Ia=-0.8, Is=Is, b = 1)
-        if self.hill == "gaussian_blob":
+        elif self.hill == "gaussian_cliff":
             x0 = self.Lx / 3
-            y0 = self.Ly * 3. / 4.
+            y0 = self.Ly * 6. / 10.
+            Is = self.Lx * 0.3
+            #return self.rectangularHill(x,y,0.8)
+            return self.gaussian2D(x,y,x0=x0, y0=y0, I0=1, Ia=1, Is=Is, b = 1)
+        elif self.hill == "gaussian_blob":
+            x0 = self.Lx / 3
+            y0 = self.Ly * 6. / 10.
             Is = self.Lx * 0.3
             #return self.rectangularHill(x,y,0.8)
             return self.gaussian2D(x,y,x0=x0, y0=y0, I0=1, Ia=-0.8, Is=Is, b = 0.1)
@@ -128,7 +134,7 @@ problem = None
 surfaceHill = None
 surfFig = None
 frame = 0
-doSave = False
+doSave = True
 
 def mkdir_p(path):
     try:
@@ -140,6 +146,7 @@ def mkdir_p(path):
 
 def plot_u_with_hill(u,x,y,t):
     global surfaceHill, problem, surfFig, frame
+    mlab.options.offscreen = False
     if surfFig:
         surfFig.scene.disable_render = True
         
@@ -159,7 +166,7 @@ def plot_u_with_hill(u,x,y,t):
     angle = 25 + 20 * (1 - cos(t * pi / 2)**2) + 60 * t # changes camera angle smoothly
     elevation = 55 - 20 * (1 - cos(1.2 * t * pi / 2)**2)  # changes camera elevation smoothly
     distance = 3 - 0.4 * (1 - cos(3 * t * pi / 2)**2) # changes camera distance smoothly
-    mlab.view(azimuth=angle, elevation=elevation,distance=distance)
+    mlab.view(azimuth=angle, elevation=elevation,distance=distance, focalpoint=(x.mean(),y.mean(),-0.2))
     #surfFig.scene.reset_zoom()
     surfFig.scene.disable_render = False
     #if t == 0:
@@ -173,16 +180,18 @@ def plot_u_with_hill(u,x,y,t):
 
 def runTsunamiProblem():
     global problem, filename, doSave, angularIncrement, surfaceHill, surfFig, surfPlot, frame
-    dt=0.005; T = 10; Lx=1.0; Ly=1.0; dx=0.01; dy=0.01
+    dt=0.005; T = 5; Lx=1.0; Ly=1.0; dx=0.01; dy=0.01
     b=0.0
     BC = "neumann"
     
-    problem = TsunamiProblem(b=b, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, hill="gaussian_sphere", initial_wave="gaussian_wall_source")
+    problem = TsunamiProblem(b=b, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, hill="gaussian_cliff", initial_wave="gaussian_sphere")
     u, x, y, t, cpu = wm.solver(problem, Lx, Ly, dx, dy, dt, T, BC, "vec",
                     user_action=plot_u_with_hill)
     return
-    hills = ["rectangular", "gaussian_blob", "gaussian_sphere", "gaussian_wall", "double_slit", "none"]
+    hills = ["rectangular", "gaussian_blob", "gaussian_sphere", "double_slit", "none"]
     initial_waves = ["gaussian_sphere", "gaussian_wall", "gaussian_wall_source"]
+    
+    
     for hill in hills:
         for initial_wave in initial_waves:
             problem = TsunamiProblem(b=b, Lx=Lx, Ly=Ly, dx=dx, dy=dy, dt=dt, hill=hill, initial_wave=initial_wave)
