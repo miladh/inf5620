@@ -14,23 +14,22 @@ import time;
 close("all")
     
 "*****************************************************************************"
-def stabilityCriterion(problem,xv,yv,dx,dy,dt):
+def stabilityCriterion(problem,xv,yv,dx,dy,dt,safetyFactor):
     q = zeros((xv.shape[0],yv.shape[1]))
     q[:,:] = problem.q(xv, yv)
-    if abs(q.max()) < 1e-12:
+    c = abs(q).max()    
+    if c < 1e-12:
         return dt
-        
-    dtx = float(dx)/q.max()
-    dty = float(dy)/q.max()
-    
-    if dt < min(dtx,dty):
+     
+    dt_max = float(safetyFactor)/c*(1.0/dx**2 + 1.0/dy**2)**(-0.5)
+    if dt < dt_max:
         return dt
     else:
-        return min(dtx,dty)
+        return dt_max
     
 "*****************************************************************************"
 def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
-            user_action=None):
+            user_action=None, safetyFactor=1.0):
     """
     Solve 
     
@@ -70,13 +69,12 @@ def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
     Iy = range(1, u.shape[1]-1)
 
     # Ensure that stability criterion is satisfied
-    dt = stabilityCriterion(problem,xv,yv,dx,dy,dt)
-    
+    dt = stabilityCriterion(problem,xv,yv,dx,dy,dt,safetyFactor)
     Nt = int(round(T/float(dt)))
     t = linspace(0, Nt*dt, Nt+1)    # mesh points in time
     
-    hx2 = (dt/dx)**2     # help variable
-    hy2 = (dt/dy)**2     # help variable
+    Cx2 = (dt/dx)**2     # help variable
+    Cy2 = (dt/dy)**2     # help variable
         
     It = range(0, t.shape[0])    
     
@@ -100,10 +98,10 @@ def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
         
     # Special formula for first time step
     if version == 'scalar':
-        u = advance(problem, u, u_1, u_2, x, y, t[0], hx2, hy2, dt, 
+        u = advance(problem, u, u_1, u_2, x, y, t[0], Cx2, Cy2, dt, 
                 step1=True, setBC = BC_type)
     else:
-        u = advance(problem, u, u_1, u_2, xv, yv, t[0], hx2, hy2, dt, 
+        u = advance(problem, u, u_1, u_2, xv, yv, t[0], Cx2, Cy2, dt, 
                 step1=True, setBC = BC_type)
         
         
@@ -115,10 +113,10 @@ def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
     for n in It[1:-1]:
         if version == 'scalar':
             u = advance(problem, u, u_1, u_2, x, y, t[n],
-                    hx2, hy2, dt, setBC = BC_type)
+                    Cx2, Cy2, dt, setBC = BC_type)
         else: 
             u = advance(problem, u, u_1, u_2, xv, yv, t[n],
-                    hx2, hy2, dt, setBC = BC_type)
+                    Cx2, Cy2, dt, setBC = BC_type)
                             
         if user_action is not None:
             if user_action(u[1:-1,1:-1], x[1:-1], y[1:-1],t, n+1):
@@ -174,7 +172,7 @@ def dirichlet_BC(u,Ix,Iy):
     
 "*****************************************************************************"
 def advance_scalar(problem, u, u_1, u_2, x, y, t, 
-            hx2, hy2, dt, step1=False, setBC = None):
+            Cx2, Cy2, dt, step1=False, setBC = None):
                       
     Ix = range(1, u.shape[0]-1)
     Iy = range(1, u.shape[1]-1)
@@ -204,7 +202,7 @@ def advance_scalar(problem, u, u_1, u_2, x, y, t,
             u[i,j] = 2*u_1[i,j]+\
                  (D1*u_2[i,j] - D2*2*dt*problem.V(x[i], y[j]))*(fac-1) +\
                  dt2/pij *problem.f(x[i], y[j], t) +\
-                 hx2/pij * u_x + hy2/pij * u_y
+                 Cx2/pij * u_x + Cy2/pij * u_y
     
     if step1:
         u[1:-1,1:-1] /= 2
@@ -217,7 +215,7 @@ def advance_scalar(problem, u, u_1, u_2, x, y, t,
     return u
 "*****************************************************************************"
 def advance_vectorized(problem, u, u_1, u_2, x, y, t, 
-            hx2, hy2, dt, step1=False, setBC = None):
+            Cx2, Cy2, dt, step1=False, setBC = None):
        
     Ix = range(1, u.shape[0]-1)
     Iy = range(1, u.shape[1]-1)               
@@ -245,7 +243,7 @@ def advance_vectorized(problem, u, u_1, u_2, x, y, t,
     u[1:-1,1:-1] = 2*u_1[1:-1,1:-1]+\
          (D1*u_2[1:-1,1:-1] - D2*2*dt*problem.V(x[1:-1,:], y[:,1:-1]))*\
          (fac-1) +dt2/pij *problem.f(x[1:-1,:], y[:,1:-1], t) +\
-         hx2/pij * u_x + hy2/pij * u_y
+         Cx2/pij * u_x + Cy2/pij * u_y
                       
     if step1:
         u[1:-1,1:-1] /= 2
@@ -267,7 +265,7 @@ def plot_u(u, x, y, t,n):
     ax.plot_wireframe(X, Y, u,rstride=1, cstride=1, cmap=cm.jet,
                     linewidth=0.1, antialiased=False)
     
-#    ax.set_zlim(-0.1,0.1)
+    ax.set_zlim(-1,1)
     ax.set_xlabel('$X$', fontsize=15)
     ax.set_ylabel('$Y$', fontsize=15)
     ax.set_zlabel('$u(x,y)$', fontsize=15)
@@ -276,7 +274,7 @@ def plot_u(u, x, y, t,n):
              
     # Let the initial condition stay on the screen for 2
     # seconds, else insert a pause of 0.2 s between each plot
-    time.sleep(2) if t == 0 else time.sleep(0.0)
+    time.sleep(2) if t[n] == 0 else time.sleep(0.0)
 "*****************************************************************************"
 
 firstPlot = False
@@ -313,7 +311,7 @@ def plot_u_mayavi(u, x, y, t,n,disable_render=True,opacity=0.7,z_scale=0.5,doSle
     if disable_render:
         surfFig.scene.disable_render = False
     if doSleep:
-        if t == 0:
+        if t[n] == 0:
             time.sleep(0.5)
         time.sleep(0.02)
     if resetZoom:        
@@ -423,6 +421,10 @@ def define_command_line_options(parser=None):
         help='time step value', metavar='dt')
         
     parser.add_argument(
+        '--safetyFactor', '--dt_safetyFactor', type=float, default=1.0, 
+        help='safety factor for time step', metavar='safetyFactor')
+        
+    parser.add_argument(
         '--T', '--stop_time', type=float, default=10.0,
         help='end time of simulation', metavar='T')    
     
@@ -462,21 +464,7 @@ def main():
     if(args.runtests):
         import subprocess
         subprocess.call(["nosetests", "-s"])
-
-
-    #Set up problem
-
-#    problem = SimpleWave(args.b)
-#
-#    #Run solver and visualize u at each time level
-#    viz(problem, args.Lx, args.Ly, args.dx, args.dy, args.dt, args.T, 
-#        args.version,args.BC, args.animate,args.pltool)
-
-
- 
-    
-    
-    
+        
 "*****************************************************************************"
 
 if __name__ == '__main__':

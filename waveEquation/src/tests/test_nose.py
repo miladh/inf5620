@@ -11,8 +11,22 @@ sys.path.append(".")
 from pylab import *
 import nose.tools as nt
 import waveMotion as wm
+import time
 
-
+def convergence_rates(h, E):
+    r = [log(E[i-1]/E[i])/log(h[i-1]/h[i])
+    for i in range(1, len(h))]
+    return r
+"*****************************************************************************" 
+def plot_truncationError(h,E):
+    plt.figure(figsize=(8, 6))
+    plt.loglog(h, E)
+    plt.xlabel("$\log_{10}(h)$",fontsize=20)
+    plt.ylabel("$\log_{10}(E)$",fontsize=20)
+    plt.title("Estimated truncation error",fontsize=16)
+    plt.tight_layout()
+    
+"*****************************************************************************"
 def test_constantSolution():
     """
     Test problem where u=I is the exact solution, to be
@@ -278,6 +292,7 @@ def test_plugwaveSolution():
             assert_no_error(u,x,y,t)
 
             print version + "-" + plug + ":","test_plugwaveSolution succeeded!"
+            
 "*****************************************************************************"
 def test_standingUndamped():
     """
@@ -293,16 +308,16 @@ def test_standingUndamped():
             
             ue = A*cos(kx*x)*cos(ky*y)*cos(w*t)
         """
-        def __init__(self, b, A, w, kx,ky):    
-            self.b = b
+        def __init__(self, A, w, kx,ky):    
+            self.b = 0.0
             self.A = A ; self.w = w
             self.kx, self.ky = kx, ky
-            self.e_max = 0.0
+            self.e_max =0.0
 
             
         def exactSolution(self,x,y,t):
-            ue = self.A*cos(self.kx*x)*cos(self.ky*y)*cos(self.w*t)
-            return ue
+                ue = self.A*cos(self.kx*x)*cos(self.ky*y)*cos(self.w*t)
+                return ue
                
         def I(self,x,y):        
             return  self.exactSolution(x,y,0)
@@ -323,30 +338,46 @@ def test_standingUndamped():
         xv = x[:,newaxis]      # for vectorized function evaluations
         yv = y[newaxis,:]
         ue = 0*u
-        ue = problem.exactSolution(xv,yv,t[n])
+
+        ue[:,:] = problem.exactSolution(xv,yv,t[n])                             
+#        print abs(u - ue).max()
+#        time.sleep(2)
+#        wm.plot_u(ue,x,y,t,n)
+#        wm.plot_u(u,x,y,t,n)
         problem.e_max = max(problem.e_max,abs(u - ue).max())
 
     print "------------------test standing undamped----------------"   
-    
-    dt_0=0.1; T = 3; Lx=10; Ly=10; dx_0=4.0; dy_0=4.0
-    b = 0.0; A = 0.05; w=10.0; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
-    BC = "neumann" ; 
-    versions = ["vec","scalar"]  
+    dt_0=0.5; h0 = 1.0
+    T = 50; Lx=20.0; Ly=20.0;
+    A = 1.0; kx=1*pi/Lx; ky= 1.0*pi/Ly
+    BC = "neumann"; makePlot = 1
+#    versions = ["vec","scalar"]
+    versions = ["vec"]
 
-    for version in versions:        
-        for i in range(0,6):
-            problem = case_standingUndamped(b,A,w,kx,ky)
-            r  = 2**(-i)
-            dt = r*dt_0; dx = r*dx_0; dy = r*dy_0
-            u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
+    for version in versions:  
+        eValues  = []
+        hValues  = []
+        for i in range(0,4):
+            p = 2**(-i)             
+            h  = p*h0; dt = p*dt_0;
+            w = 2*pi/dt/30.0
+            problem = case_standingUndamped(A,w,kx,ky)
+            u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=h, dy=h, 
                      dt=dt, T=T,BC = BC, version=version, 
-                     user_action=max_error)
+                     user_action=max_error,safetyFactor=1.0)
+                     
+            eValues.append(problem.e_max)
+            hValues.append(h)
            
 #            print "dt=", dt, " dx=", dx, " dy=", dy
-            print version , "error= ", problem.e_max
+            print version , "error= ", problem.e_max           
+           
+        r = convergence_rates(hValues, eValues)
+        if makePlot: plot_truncationError(hValues, eValues)        
+#        if not nt.assert_almost_equal(2,r[-1],places=1):
+#            print version + ":","test_standingUndampedSolution succeeded!"
 
-
-
+        
 "*****************************************************************************" 
 def test_standingDamped():
     """
@@ -401,39 +432,36 @@ def test_standingDamped():
         problem.e_max = max(problem.e_max,abs(u - ue).max())
   
     print "------------------test standing damped----------------"   
-    
-    dt_0=0.5; T = 10; Lx=10; Ly=10; dx_0=1.0; dy_0=1.0
-    b = 0.1; A = 0.05; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
-    BC = "neumann" ; 
+    dt_0=0.5; h0 = 5.0
+    T = 50; Lx=20.0; Ly=20.0; b = 1.0
+    A = 1.0; kx=10*pi/Lx; ky= 10.0*pi/Ly
+    BC = "neumann"; makePlot = 1
 #    versions = ["vec","scalar"]
     versions = ["vec"]
 
     
     for version in versions:
         eValues  = []
-        dtValues  = []
+        hValues  = []
 
-        for i in range(0,5):
+        for i in range(0,4):
+            p = 2**(-i)             
+            h  = p*h0; dt = p*dt_0;
             problem = case_standingDamped(b,A,kx,ky)
-            r  = 2**(-i)
-            dt = r*dt_0; dx = r*dx_0; dy = r*dy_0
-            u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
+            u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=h, dy=h, 
                      dt=dt, T=T,BC = BC, version=version, 
                      user_action=max_error)                     
            
 
             eValues.append(problem.e_max)
-            dtValues.append(dt)
-
-        m = len(dtValues)
-        r = []   
-        for i in range(1, m, 1):    
-            r.append(log(eValues[i-1]/eValues[i])/ log(dtValues[i-1]/dtValues[i])) 
-       
-        expectedRate = 2.0
-        calculatedRate = r[-1]
-        if not nt.assert_almost_equal(expectedRate,calculatedRate,places=1):
-                    print version + ":","test_standingDampedSolution succeeded!"
+            hValues.append(dt)
+            print version , "error= ", problem.e_max
+            
+        r = convergence_rates(hValues, eValues)
+        if makePlot: plot_truncationError(hValues, eValues)        
+        print r
+#        if not nt.assert_almost_equal(2,r[-1],places=1):
+#                    print version + ":","test_standingDampedSolution succeeded!"
                 
                 
 "*****************************************************************************" 
@@ -491,44 +519,43 @@ def test_manufacturedSolution():
         ue = 0*u
         ue = problem.exactSolution(xv,yv,t[n])
         problem.e_max = max(problem.e_max,abs(u - ue).max())
-  
     print "---------------test manufactured solution----------------"   
-    
-    dt_0=0.5; T = 10; Lx=10; Ly=10; dx_0=1.0; dy_0=1.0
-    b = 0.05; w= 0.1; A = 0.05; B = 0.05; kx=1.0*pi/Lx; ky= 1.0*pi/Ly
-    BC = "neumann" ; 
+    dt_0=0.5; h0 = 1.0
+    T = 50; Lx=20.0; Ly=20.0; b = 1.0
+    A = 1.0; B = 1.0; kx=10.0*pi/Lx; ky= 10.0*pi/Ly
+    BC = "neumann"; makePlot = 1
 #    versions = ["vec","scalar"]
     versions = ["vec"]
-
     
     for version in versions:
         eValues  = []
-        dtValues  = []
-        for i in range(0,5):
+        hValues  = []
+        for i in range(0,4):
+            p = 2**(-i)             
+            h  = p*h0; dt = p*dt_0;
+            w = 2*pi/dt/30.0
             problem = case_manufacturedSolution(b,w,A,B,kx,ky)
-            r  = 2**(-i)
-            dt = r*dt_0; dx = r*dx_0; dy = r*dy_0
-            u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
+            u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=h, dy=h, 
                      dt=dt, T=T,BC = BC, version=version, 
                      user_action=max_error)                     
            
 
             eValues.append(problem.e_max)
-            dtValues.append(dt)
-
-        m = len(dtValues)
-        r = []   
-        for i in range(1, m, 1):    
-            r.append(log(eValues[i-1]/eValues[i])/ log(dtValues[i-1]/dtValues[i])) 
-        expectedRate = 2.0
-        calculatedRate = r[-1]
-        if not nt.assert_almost_equal(expectedRate,calculatedRate,places=1):
-                    print version + ":","test_manufacturedSolution succeeded!"
+            hValues.append(dt)
+            print version , "error= ", problem.e_max
+            
+        r = convergence_rates(hValues, eValues)
+        if makePlot: plot_truncationError(hValues, eValues)        
+        print r
+        
+#        if not nt.assert_almost_equal(2,r[-1],places=1):
+#            print version + ":","test_manufacturedSolution succeeded!"
+                
 "*****************************************************************************"
 if __name__ == '__main__':
 #    test_constantSolution()
 #    test_cubicSolution()
 #    test_plugwaveSolution()
-    test_standingUndamped()
+#    test_standingUndamped()
 #    test_standingDamped()
 #    test_manufacturedSolution()
