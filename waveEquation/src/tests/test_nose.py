@@ -215,7 +215,12 @@ def test_plugwaveSolution():
         def __init__(self, b, sigma, Lx, Ly, plug=None):    
             self.b = b; self.plug = plug
             self.Lx, self.Ly = Lx, Ly
-            self.c = Lx/2.0
+            if plug=="x":            
+                self.c = Lx/2.0
+            elif plug=="y":
+                self.c = Ly/2.0
+            else:
+                raise ValueError('plug=%s' % plug)  
 
         def exactSolution(self,x,y,t):
             return self.I(x,y)
@@ -260,7 +265,7 @@ def test_plugwaveSolution():
             return 0.0
             
         def q(self,x,y):
-            return 1
+            return 1.0
     
         def p(self,x,y):
             return 1.0
@@ -275,7 +280,7 @@ def test_plugwaveSolution():
 
     print "--------------test plug wave solution---------------"   
     
-    dt = dx = dy = 0.1; T = Lx = Ly = 1; 
+    dt = dx = dy = 1.0; T = Lx = Ly = 10; 
     b=0; sigma = 0.05; plugs = ["x","y"]
     BC = "neumann" ; 
     versions = ["vec","scalar"]
@@ -287,10 +292,11 @@ def test_plugwaveSolution():
             #Run solver and visualize u at each time level
             u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=dx, dy=dy, 
                      dt=dt, T=T,BC = BC, version=version, 
-                     user_action=None)   
-            
+                     user_action=None,safetyFactor=2.0)   
+                     
+                     
             assert_no_error(u,x,y,t)
-
+            
             print version + "-" + plug + ":","test_plugwaveSolution succeeded!"
             
 "*****************************************************************************"
@@ -347,9 +353,9 @@ def test_standingUndamped():
         problem.e_max = max(problem.e_max,abs(u - ue).max())
 
     print "------------------test standing undamped----------------"   
-    dt_0=0.5; h0 = 1.0
+    dt_0=0.01; h0 = 1.0
     T = 50; Lx=20.0; Ly=20.0;
-    A = 1.0; kx=1*pi/Lx; ky= 1.0*pi/Ly
+    A = 1.0; kx=10.*pi/Lx; ky= 10.*pi/Ly
     BC = "neumann"; makePlot = 1
 #    versions = ["vec","scalar"]
     versions = ["vec"]
@@ -359,7 +365,7 @@ def test_standingUndamped():
         hValues  = []
         for i in range(0,4):
             p = 2**(-i)             
-            h  = p*h0; dt = p*dt_0;
+            h  = p*h0; dt = dt_0;
             w = 2*pi/dt/30.0
             problem = case_standingUndamped(A,w,kx,ky)
             u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=h, dy=h, 
@@ -370,7 +376,7 @@ def test_standingUndamped():
             hValues.append(h)
            
 #            print "dt=", dt, " dx=", dx, " dy=", dy
-            print version , "error= ", problem.e_max           
+            print version , "error= ", problem.e_max     
            
         r = convergence_rates(hValues, eValues)
         if makePlot: plot_truncationError(hValues, eValues)        
@@ -553,9 +559,9 @@ def test_manufacturedSolution():
                 
 "*****************************************************************************"
 if __name__ == '__main__':
-#    test_constantSolution()
-#    test_cubicSolution()
-#    test_plugwaveSolution()
+    test_constantSolution()
+    test_cubicSolution()
+    test_plugwaveSolution()
 #    test_standingUndamped()
 #    test_standingDamped()
 #    test_manufacturedSolution()
