@@ -197,7 +197,6 @@ def advance_scalar(problem, u, u_1, u_2, x, y, t,
             
             pij = problem.p(x[i], y[j])
             fac = problem.b*float(dt) / (2*pij)
-
             
             u[i,j] = 2*u_1[i,j]+\
                  (D1*u_2[i,j] - D2*2*dt*problem.V(x[i], y[j]))*(fac-1) +\
@@ -265,7 +264,7 @@ def plot_u(u, x, y, t,n):
     ax.plot_wireframe(X, Y, u,rstride=1, cstride=1, cmap=cm.jet,
                     linewidth=0.1, antialiased=False)
     
-    ax.set_zlim(-1,1)
+    ax.set_zlim(-10,10)
     ax.set_xlabel('$X$', fontsize=15)
     ax.set_ylabel('$Y$', fontsize=15)
     ax.set_zlabel('$u(x,y)$', fontsize=15)

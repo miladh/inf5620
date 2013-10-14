@@ -335,7 +335,8 @@ def test_standingUndamped():
             return 0.0
     
         def q(self,x,y):
-            return 1.0
+            q = self.w/(sqrt(self.kx**2+self.ky**2))
+            return 1.1**2
 
         def p(self,x,y):
             return 1.0
@@ -345,28 +346,30 @@ def test_standingUndamped():
         yv = y[newaxis,:]
         ue = 0*u
 
-        ue[:,:] = problem.exactSolution(xv,yv,t[n])                             
-#        print abs(u - ue).max()
+        ue[:,:] = problem.exactSolution(xv,yv,t[n])                          
+#        print abs(u[:,:] - ue[:,:]).max()
 #        time.sleep(2)
 #        wm.plot_u(ue,x,y,t,n)
-#        wm.plot_u(u,x,y,t,n)
-        problem.e_max = max(problem.e_max,abs(u - ue).max())
+#        wm.plot_u_mayavi(u,x,y,t,n)
+        problem.e_max = max(problem.e_max,abs(u[:,:] - ue[:,:]).max())
 
     print "------------------test standing undamped----------------"   
-    dt_0=0.01; h0 = 1.0
-    T = 50; Lx=20.0; Ly=20.0;
-    A = 1.0; kx=10.*pi/Lx; ky= 10.*pi/Ly
+    dt_0 = 0.5; h0 = 1.0
+    T = 1.0; Lx = 10.0; Ly = 10.0;
+    A = 1.0; kx=1.*pi/Lx; ky= 1.*pi/Ly
     BC = "neumann"; makePlot = 1
 #    versions = ["vec","scalar"]
     versions = ["vec"]
-
+    c = 1.1
+    w = c *sqrt((kx**2+ky**2))
+    
+    
     for version in versions:  
         eValues  = []
         hValues  = []
         for i in range(0,4):
             p = 2**(-i)             
-            h  = p*h0; dt = dt_0;
-            w = 2*pi/dt/30.0
+            h  = p*h0; dt = p*dt_0;
             problem = case_standingUndamped(A,w,kx,ky)
             u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=h, dy=h, 
                      dt=dt, T=T,BC = BC, version=version, 
@@ -380,8 +383,8 @@ def test_standingUndamped():
            
         r = convergence_rates(hValues, eValues)
         if makePlot: plot_truncationError(hValues, eValues)        
-#        if not nt.assert_almost_equal(2,r[-1],places=1):
-#            print version + ":","test_standingUndampedSolution succeeded!"
+        if not nt.assert_almost_equal(2,r[-1],places=1):
+            print version + ":","test_standingUndampedSolution succeeded!"
 
         
 "*****************************************************************************" 
@@ -559,9 +562,9 @@ def test_manufacturedSolution():
                 
 "*****************************************************************************"
 if __name__ == '__main__':
-    test_constantSolution()
-    test_cubicSolution()
-    test_plugwaveSolution()
-#    test_standingUndamped()
+#    test_constantSolution()
+#    test_cubicSolution()
+#    test_plugwaveSolution()
+    test_standingUndamped()
 #    test_standingDamped()
 #    test_manufacturedSolution()
