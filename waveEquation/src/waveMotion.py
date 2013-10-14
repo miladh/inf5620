@@ -1,32 +1,37 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Oct  4 11:46:19 2013
 
-@author: Milad H. Mobarhan
-"""
 from pylab import*
-import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import axes3d
-import mayavi.mlab as mlab
-plt.ion()  # interactive mode on
-import time;
-close("all")
-    
+import time
+
 "*****************************************************************************"
-def stabilityCriterion(problem,xv,yv,dx,dy,dt,safetyFactor):
-    q = zeros((xv.shape[0],yv.shape[1]))
-    q[:,:] = problem.q(xv, yv)
-    c = abs(q).max()    
-    if c < 1e-12:
-        return dt
-     
-    dt_max = float(safetyFactor)/c*(1.0/dx**2 + 1.0/dy**2)**(-0.5)
-    if dt < dt_max:
-        return dt
-    else:
-        return dt_max
-    
+class Problem():
+    """
+    Superclass for problems with PDEs of the type
+            
+        p*u_tt + b *u_t = div(q div(u) ) + f   
+
+    where u is a function of x,y and t, with initial condition 
+        
+        u(x,y,0)   = I(x,y), 
+        u_t(x,y,0) = V(x,y)
+
+    for t in the time interval (0,T]. 
+    """
+                     
+    def I(self,x,y):        
+        raise NotImplementedError
+      
+    def V(self,x,y):     
+        raise NotImplementedError
+
+    def f(self,x,y,t):
+        raise NotImplementedError 
+
+    def q(self,x,y):
+        raise NotImplementedError 
+
+    def p(self,x,y):
+        raise NotImplementedError        
 "*****************************************************************************"
 def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
             user_action=None, safetyFactor=1.0):
@@ -129,47 +134,18 @@ def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
     return u[1:-1,1:-1], x[1:-1], y[1:-1], t, cpu_time
     
 "*****************************************************************************"
-def neumann_BC(u,Ix,Iy):
-    """
-    Set Neumann boundary conditions
-    """
-    i = Ix[0]          # x=0 boundary
-    for j in range(0,u.shape[1]): 
-        u[i-1,j] = u[i+1,j]
-    
-    i = Ix[-1]         # x=Lx boundary
-    for j in range(0,u.shape[1]): 
-        u[i+1,j] = u[i-1,j]
-    
-    j = Iy[0]          # y=0 boundary
-    for i in range(0,u.shape[0]): 
-        u[i,j-1] = u[i,j+1]
-    
-    j = Iy[-1]         # y=Ly boundary
-    for i in range(0,u.shape[0]): 
-        u[i,j+1] = u[i,j-1]
-    
-    return u
-"*****************************************************************************"
-def dirichlet_BC(u,Ix,Iy):
-    """
-    Set Dirichlet boundary conditions
-    """
-    i = Ix[0]       # x=0 boundary
-    for j in Iy: u[i,j] = 0
-
-    i = Ix[-1]     # x=Lx boundary 
-    for j in Iy: u[i,j] = 0
-    
-    j = Iy[0]      # y=0 boundary
-    for i in Ix: u[i,j] = 0
-    
-    j = Iy[-1]    # y=Ly boundary
-    for i in Ix: u[i,j] = 0
-    
-    return u
-
-    
+def stabilityCriterion(problem,xv,yv,dx,dy,dt,safetyFactor):
+    q = zeros((xv.shape[0],yv.shape[1]))
+    q[:,:] = problem.q(xv, yv)
+    c = abs(q).max()    
+    if c < 1e-12:
+        return dt
+     
+    dt_max = float(safetyFactor)/c*(1.0/dx**2 + 1.0/dy**2)**(-0.5)
+    if dt < dt_max:
+        return dt
+    else:
+        return dt_max  
 "*****************************************************************************"
 def advance_scalar(problem, u, u_1, u_2, x, y, t, 
             Cx2, Cy2, dt, step1=False, setBC = None):
@@ -253,146 +229,47 @@ def advance_vectorized(problem, u, u_1, u_2, x, y, t,
     u = setBC(u,Ix,Iy)   
 
     return u
-"*****************************************************************************"
-def plot_u(u, x, y, t,n):
-    """
-    user_action function for solver.
-    """
-    X, Y = meshgrid(x, y)
-    clf()
-    ax = gca(projection='3d')
-    ax.plot_wireframe(X, Y, u,rstride=1, cstride=1, cmap=cm.jet,
-                    linewidth=0.1, antialiased=False)
     
-    ax.set_zlim(-10,10)
-    ax.set_xlabel('$X$', fontsize=15)
-    ax.set_ylabel('$Y$', fontsize=15)
-    ax.set_zlabel('$u(x,y)$', fontsize=15)
-    plt.tight_layout()
-    plt.draw()       
-             
-    # Let the initial condition stay on the screen for 2
-    # seconds, else insert a pause of 0.2 s between each plot
-    time.sleep(2) if t[n] == 0 else time.sleep(0.0)
 "*****************************************************************************"
-
-firstPlot = False
-surfPlot = None
-surfFig = None
-surfAxes = None
-
-def plot_u_mayavi(u, x, y, t,n,disable_render=True,opacity=0.7,z_scale=0.5,doSleep=True,resetZoom=True):
+def neumann_BC(u,Ix,Iy):
     """
-    user_action function for solver.
+    Set Neumann boundary conditions
     """
-    global surfPlot, surfFig, surfAxes
-    normalizationFactor = 1 / z_scale
-    if not surfFig:        
-        surfFig = mlab.figure(size=(1280,720),bgcolor=(0,0,0))
-    if not surfPlot:
-        # Set up temporary plot for scaling
-        X,Y = meshgrid(x,y)
-        utest = 0.5 * sin(20 * X) + 0.5 * cos(20 * Y)
-        surfPlot = mlab.surf(x,y,utest, opacity=opacity, colormap="Blues", vmin=-0.2, vmax=0.7,
-                             extent=[x.min(), x.max(), y.min(), y.max(), -0.1, 0.1])
-        # Set reverse colormap
-        lut = surfPlot.module_manager.scalar_lut_manager.lut.table.to_array()
-        ilut = lut[::-1]
-        surfPlot.module_manager.scalar_lut_manager.lut.table = ilut
-        #surfAxes = mlab.axes(nb_labels=5, opacity=0,
-        #                     extent=[x.min(), x.max(), y.min(), y.max(), -0.4, 0.4])
-        
-    if disable_render:
-        surfFig.scene.disable_render = True
-    surfFig.scene.anti_aliasing_frames = 0
-    surfPlot.mlab_source.set(x=x, y=y, scalars=u*normalizationFactor)
-    #surfAxes.extent=[x.min(), x.max(), y.min(), y.max(), -0.1, 0.1]
-    if disable_render:
-        surfFig.scene.disable_render = False
-    if doSleep:
-        if t[n] == 0:
-            time.sleep(0.5)
-        time.sleep(0.02)
-    if resetZoom:        
-        surfFig.scene.reset_zoom()
+    i = Ix[0]          # x=0 boundary
+    for j in range(0,u.shape[1]): 
+        u[i-1,j] = u[i+1,j]
+    
+    i = Ix[-1]         # x=Lx boundary
+    for j in range(0,u.shape[1]): 
+        u[i+1,j] = u[i-1,j]
+    
+    j = Iy[0]          # y=0 boundary
+    for i in range(0,u.shape[0]): 
+        u[i,j-1] = u[i,j+1]
+    
+    j = Iy[-1]         # y=Ly boundary
+    for i in range(0,u.shape[0]): 
+        u[i,j+1] = u[i,j-1]
+    
+    return u
 "*****************************************************************************"
-def viz(problem, Lx, Ly, dx, dy, dt, T, 
-        version=None ,BC=None, animate=True, pltool="matplotlib"):
+def dirichlet_BC(u,Ix,Iy):
     """
-    Run solver and visualize u at each time level.
+    Set Dirichlet boundary conditions
     """
+    i = Ix[0]       # x=0 boundary
+    for j in Iy: u[i,j] = 0
+
+    i = Ix[-1]     # x=Lx boundary 
+    for j in Iy: u[i,j] = 0
     
-    if animate:
-        if pltool=="matplotlib":
-            user_action = plot_u
-        else:
-            user_action = plot_u_mayavi
-    else: 
-        user_action =  None
-        
-    u, x, y, t, cpu = solver(problem, Lx, Ly, dx, dy, dt, T, BC, version,
-                            user_action)
-
-#    print "CPU time: ", cpu ,"\n"
+    j = Iy[0]      # y=0 boundary
+    for i in Ix: u[i,j] = 0
     
-    return u, x, y, t
+    j = Iy[-1]    # y=Ly boundary
+    for i in Ix: u[i,j] = 0
     
-    
-
-"*****************************************************************************"
-class Problem():
-    """
-    Superclass for problems with PDEs of the type
-            
-        p*u_tt + b *u_t = div(q div(u) ) + f   
-
-    where u is a function of x,y and t, with initial condition 
-        
-        u(x,y,0)   = I(x,y), 
-        u_t(x,y,0) = V(x,y)
-
-    for t in the time interval (0,T]. 
-    """
-                     
-    def I(self,x,y):        
-        raise NotImplementedError
-      
-    def V(self,x,y):     
-        raise NotImplementedError
-
-    def f(self,x,y,t):
-        raise NotImplementedError 
-
-    def q(self,x,y):
-        raise NotImplementedError 
-
-    def p(self,x,y):
-        raise NotImplementedError 
-        
-"*****************************************************************************"
-class SimpleWave(Problem):
-    """
-    Problem:
-        Simple wave motion
-    """
-    def __init__(self, b):    
-        self.b = b
-           
-    def I(self,x,y):  
-        return 0.05*cos(pi*x)*cos(pi*y);
-      
-    def V(self,x,y):  
-        return 0.0
-
-    def f(self,x,y,t):
-        return 0.0
-
-    def q(self,x,y):
-        return 1.0
-
-    def p(self,x,y):
-        return 1.0
-        
+    return u
 "*****************************************************************************"
 def define_command_line_options(parser=None):
     if parser is None:
@@ -438,14 +315,7 @@ def define_command_line_options(parser=None):
     parser.add_argument(
         '--BC', '--boundary_condition', type=str, default="neumann",
         help='type of boundary condition', metavar='BC')  
-                
-    parser.add_argument('--animate', action='store_true', default=True,
-                        help='make animation')
-                        
-    parser.add_argument(
-        '--pltool', '--plot_tool', type=str, default="matplotli",
-        help='tool for animating', metavar='pltool') 
-                        
+                 
     parser.add_argument('--runtests', action='store_true', default=True,
                         help='run nosetests')
         
