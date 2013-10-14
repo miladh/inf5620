@@ -314,16 +314,17 @@ def test_standingUndamped():
             
             ue = A*cos(kx*x)*cos(ky*y)*cos(w*t)
         """
-        def __init__(self, A, w, kx,ky):    
+        def __init__(self, A,c, kx,ky):    
             self.b = 0.0
-            self.A = A ; self.w = w
+            self.A = A; self.c=c
             self.kx, self.ky = kx, ky
             self.e_max =0.0
 
             
         def exactSolution(self,x,y,t):
-                ue = self.A*cos(self.kx*x)*cos(self.ky*y)*cos(self.w*t)
-                return ue
+            w = sqrt(self.q(x,y)*(self.kx**2+self.ky**2))
+            ue = self.A*cos(self.kx*x)*cos(self.ky*y)*cos(w*t)
+            return ue
                
         def I(self,x,y):        
             return  self.exactSolution(x,y,0)
@@ -335,8 +336,7 @@ def test_standingUndamped():
             return 0.0
     
         def q(self,x,y):
-            q = self.w/(sqrt(self.kx**2+self.ky**2))
-            return 1.1**2
+            return self.c**2
 
         def p(self,x,y):
             return 1.0
@@ -347,30 +347,25 @@ def test_standingUndamped():
         ue = 0*u
 
         ue[:,:] = problem.exactSolution(xv,yv,t[n])                          
-#        print abs(u[:,:] - ue[:,:]).max()
-#        time.sleep(2)
-#        wm.plot_u(ue,x,y,t,n)
-#        wm.plot_u_mayavi(u,x,y,t,n)
         problem.e_max = max(problem.e_max,abs(u[:,:] - ue[:,:]).max())
 
     print "------------------test standing undamped----------------"   
     dt_0 = 0.5; h0 = 1.0
     T = 1.0; Lx = 10.0; Ly = 10.0;
     A = 1.0; kx=1.*pi/Lx; ky= 1.*pi/Ly
-    BC = "neumann"; makePlot = 1
-#    versions = ["vec","scalar"]
-    versions = ["vec"]
     c = 1.1
-    w = c *sqrt((kx**2+ky**2))
+    BC = "neumann"; makePlot = 1
+    versions = ["vec","scalar"]
+
     
-    
+
     for version in versions:  
         eValues  = []
         hValues  = []
         for i in range(0,4):
             p = 2**(-i)             
             h  = p*h0; dt = p*dt_0;
-            problem = case_standingUndamped(A,w,kx,ky)
+            problem = case_standingUndamped(A,c,kx,ky)
             u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=h, dy=h, 
                      dt=dt, T=T,BC = BC, version=version, 
                      user_action=max_error,safetyFactor=1.0)
