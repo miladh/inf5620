@@ -60,7 +60,7 @@ def test_standingUndamped():
     T = 1.0; Lx = 10.0; Ly = 10.0;
     A = 1.0; kx=1.*pi/Lx; ky= 1.*pi/Ly
     c = 1.1
-    BC = "neumann"; makePlot = 1
+    BC = "neumann"; makePlot = 0
     versions = ["vec","scalar"]
 
     for version in versions:  

@@ -67,7 +67,7 @@ def test_manufacturedSolution():
     dt_0 = 0.5; h0 = 1.0; w = 1.1
     b = 0.01; d =0.007; T = 1.0; Lx = 10.0; Ly = 10.0;
     A = 1.1; B = 1.2; kx=1.*pi/Lx; ky= 1.*pi/Ly
-    BC = "neumann"; makePlot = 1
+    BC = "neumann"; makePlot = 0
     versions = ["vec","scalar"] 
   
     for version in versions:

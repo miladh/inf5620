@@ -101,7 +101,7 @@ def solver(problem, Lx, Ly, dx, dy, dt, T,   BC = None, version = None,
         user_action(u_1[1:-1,1:-1], x[1:-1], y[1:-1], t,0)
         
         
-    # Special formula for first time step
+    # First time step
     if version == 'scalar':
         u = advance(problem, u, u_1, u_2, x, y, t[0], Cx2, Cy2, dt, 
                 step1=True, setBC = BC_type)

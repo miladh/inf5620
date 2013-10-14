@@ -35,7 +35,7 @@ class case_constantSolution(wm.Problem):
 def test_constantSolution():
     """
     Test problem where u=I is the exact solution, to be
-    reproduced (to machine precision) by ady relevant method.
+    reproduced (to machine precision).
     """
     def assert_no_error(u, x, y, t, n):        
         xv = x[:,newaxis]      # for vectorized function evaluations
