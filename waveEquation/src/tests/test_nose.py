@@ -345,7 +345,6 @@ def test_standingUndamped():
         xv = x[:,newaxis]      # for vectorized function evaluations
         yv = y[newaxis,:]
         ue = 0*u
-
         ue[:,:] = problem.exactSolution(xv,yv,t[n])                          
         problem.e_max = max(problem.e_max,abs(u[:,:] - ue[:,:]).max())
 
@@ -356,8 +355,6 @@ def test_standingUndamped():
     c = 1.1
     BC = "neumann"; makePlot = 1
     versions = ["vec","scalar"]
-
-    
 
     for version in versions:  
         eValues  = []
@@ -374,7 +371,7 @@ def test_standingUndamped():
             hValues.append(h)
            
 #            print "dt=", dt, " dx=", dx, " dy=", dy
-            print version , "error= ", problem.e_max     
+#            print version , "error= ", problem.e_max     
            
         r = convergence_rates(hValues, eValues)
         if makePlot: plot_truncationError(hValues, eValues)        
@@ -397,51 +394,52 @@ def test_standingDamped():
             
             ue = [A*cos(w*t)+Bsin(w*t)]*exp(-b*t)*cos(kx*x)*cos(ky*y)
         """
-        def __init__(self, b, A,kx,ky):    
-            self.b = b; self.A = A;
+        def __init__(self,b,c,A,kx,ky):    
+            self.b = b; self.c=c; self.d = self.b*0.5; 
+            self.A = A
             self.kx, self.ky = kx, ky
             self.e_max = 0.0
             
             q = self.q(0,0)       
-            self.w = sqrt(self.kx**2 * q + self.ky**2 * q - self.b**2)
+            self.w = sqrt(self.kx**2 * q + self.ky**2 * q - self.d**2)
             self.B = self.A*self.b/self.w
 
             
         def exactSolution(self,x,y,t):
-            b = self.b; A = self.A; B=self.B; w=self.w; kx=self.kx; ky=self.ky
-            ue = (A*cos(t*w) + B*sin(t*w))*exp(-b*t)*cos(kx*x)*cos(ky*y)
+            d = self.d; A = self.A; B=self.B; w=self.w; kx=self.kx; ky=self.ky
+            ue = (A*cos(t*w) + B*sin(t*w))*exp(-d*t)*cos(kx*x)*cos(ky*y)
             return ue
                
         def I(self,x,y):        
             return  self.exactSolution(x,y,0)
           
         def V(self,x,y):     
-            b = self.b; A = self.A; B=self.B; w=self.w; kx=self.kx; ky=self.ky
-            return (-A*b + B*w)*cos(kx*x)*cos(ky*y)
+            d = self.d; A = self.A; B=self.B; w=self.w; kx=self.kx; ky=self.ky
+            return (-A*d + B*w)*cos(kx*x)*cos(ky*y)
     
         def f(self,x,y,t):
             return 0.0
     
         def q(self,x,y):
-            return 10.0
+            return self.c**2
     
         def p(self,x,y):
             return 1.0
     "*************************************************************************"
-    def max_error(u, x, y, t, n):
+    def max_error(u, x, y, t, n):        
         xv = x[:,newaxis]      # for vectorized function evaluations
         yv = y[newaxis,:]
         ue = 0*u
-        ue = problem.exactSolution(xv,yv,t[n])
-        problem.e_max = max(problem.e_max,abs(u - ue).max())
+        ue[:,:] = problem.exactSolution(xv,yv,t[n])                       
+        problem.e_max = max(problem.e_max,abs(u[:,:] - ue[:,:]).max())
   
     print "------------------test standing damped----------------"   
-    dt_0=0.5; h0 = 5.0
-    T = 50; Lx=20.0; Ly=20.0; b = 1.0
-    A = 1.0; kx=10*pi/Lx; ky= 10.0*pi/Ly
-    BC = "neumann"; makePlot = 1
-#    versions = ["vec","scalar"]
-    versions = ["vec"]
+    dt_0 = 0.5; h0 = 1.0
+    b = 0.01; T = 1.0; Lx = 10.0; Ly = 10.0;
+    A = 1.0; kx=1.*pi/Lx; ky= 1.*pi/Ly
+    c = 1.1; 
+    BC = "neumann"; makePlot = 0
+    versions = ["vec","scalar"]
 
     
     for version in versions:
@@ -451,21 +449,23 @@ def test_standingDamped():
         for i in range(0,4):
             p = 2**(-i)             
             h  = p*h0; dt = p*dt_0;
-            problem = case_standingDamped(b,A,kx,ky)
+            problem = case_standingDamped(b,c,A,kx,ky)
             u, x, y, t, cpu = wm.solver(problem, Lx=Lx, Ly=Ly, dx=h, dy=h, 
                      dt=dt, T=T,BC = BC, version=version, 
-                     user_action=max_error)                     
+                     user_action=max_error,safetyFactor=1.0)                     
            
 
             eValues.append(problem.e_max)
             hValues.append(dt)
-            print version , "error= ", problem.e_max
+
+
+#            print "dt=", dt, " dx=", h
+#            print version , "error= ", problem.e_max  
             
         r = convergence_rates(hValues, eValues)
         if makePlot: plot_truncationError(hValues, eValues)        
-        print r
-#        if not nt.assert_almost_equal(2,r[-1],places=1):
-#                    print version + ":","test_standingDampedSolution succeeded!"
+        if not nt.assert_almost_equal(2,r[-1],places=1):
+                    print version + ":","test_standingDampedSolution succeeded!"
                 
                 
 "*****************************************************************************" 
@@ -524,13 +524,13 @@ def test_manufacturedSolution():
         ue = problem.exactSolution(xv,yv,t[n])
         problem.e_max = max(problem.e_max,abs(u - ue).max())
     print "---------------test manufactured solution----------------"   
-    dt_0=0.5; h0 = 1.0
-    T = 50; Lx=20.0; Ly=20.0; b = 1.0
-    A = 1.0; B = 1.0; kx=10.0*pi/Lx; ky= 10.0*pi/Ly
+    dt_0 = 0.5; h0 = 1.0
+    b = 1.0; T = 1.0; Lx = 10.0; Ly = 10.0;
+    A = 1.0; B = 1.0; kx=1.*pi/Lx; ky= 1.*pi/Ly
     BC = "neumann"; makePlot = 1
 #    versions = ["vec","scalar"]
-    versions = ["vec"]
-    
+    versions = ["vec"]    
+  
     for version in versions:
         eValues  = []
         hValues  = []
@@ -560,6 +560,6 @@ if __name__ == '__main__':
 #    test_constantSolution()
 #    test_cubicSolution()
 #    test_plugwaveSolution()
-    test_standingUndamped()
-#    test_standingDamped()
+#    test_standingUndamped()
+    test_standingDamped()
 #    test_manufacturedSolution()
