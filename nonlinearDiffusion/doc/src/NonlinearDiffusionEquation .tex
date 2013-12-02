@@ -1,0 +1,505 @@
+
+
+
+% Header, overrides base
+
+    % Make sure that the sphinx doc style knows who it inherits from.
+    \def\sphinxdocclass{article}
+
+    % Declare the document class
+    \documentclass[letterpaper,10pt,english]{/usr/share/sphinx/texinputs/sphinxhowto}
+
+    % Imports
+    \usepackage[utf8]{inputenc}
+    \DeclareUnicodeCharacter{00A0}{\\nobreakspace}
+    \usepackage[T1]{fontenc}
+    \usepackage{babel}
+    \usepackage{times}
+    \usepackage{import}
+    \usepackage[Bjarne]{/usr/share/sphinx/texinputs/fncychap}
+    \usepackage{longtable}
+    \usepackage{/usr/share/sphinx/texinputs/sphinx}
+    \usepackage{multirow}
+
+    \usepackage{amsmath}
+    \usepackage{amssymb}
+    \usepackage{ucs}
+    \usepackage{enumerate}
+
+    % Used to make the Input/Output rules follow around the contents.
+    \usepackage{needspace}
+
+    % Pygments requirements
+    \usepackage{fancyvrb}
+    \usepackage{color}
+    % ansi colors additions
+    \definecolor{darkgreen}{rgb}{.12,.54,.11}
+    \definecolor{lightgray}{gray}{.95}
+    \definecolor{brown}{rgb}{0.54,0.27,0.07}
+    \definecolor{purple}{rgb}{0.5,0.0,0.5}
+    \definecolor{darkgray}{gray}{0.25}
+    \definecolor{lightred}{rgb}{1.0,0.39,0.28}
+    \definecolor{lightgreen}{rgb}{0.48,0.99,0.0}
+    \definecolor{lightblue}{rgb}{0.53,0.81,0.92}
+    \definecolor{lightpurple}{rgb}{0.87,0.63,0.87}
+    \definecolor{lightcyan}{rgb}{0.5,1.0,0.83}
+
+    % Needed to box output/input
+    \usepackage{tikz}
+        \usetikzlibrary{calc,arrows,shadows}
+    \usepackage[framemethod=tikz]{mdframed}
+
+    \usepackage{alltt}
+
+    % Used to load and display graphics
+    \usepackage{graphicx}
+    \graphicspath{ {figs/} }
+    \usepackage[Export]{adjustbox} % To resize
+
+    % used so that images for notebooks which have spaces in the name can still be included
+    \usepackage{grffile}
+
+
+    % For formatting output while also word wrapping.
+    \usepackage{listings}
+    \lstset{breaklines=true}
+    \lstset{basicstyle=\small\ttfamily}
+    \def\smaller{\fontsize{9.5pt}{9.5pt}\selectfont}
+
+    %Pygments definitions
+    
+\makeatletter
+\def\PY@reset{\let\PY@it=\relax \let\PY@bf=\relax%
+    \let\PY@ul=\relax \let\PY@tc=\relax%
+    \let\PY@bc=\relax \let\PY@ff=\relax}
+\def\PY@tok#1{\csname PY@tok@#1\endcsname}
+\def\PY@toks#1+{\ifx\relax#1\empty\else%
+    \PY@tok{#1}\expandafter\PY@toks\fi}
+\def\PY@do#1{\PY@bc{\PY@tc{\PY@ul{%
+    \PY@it{\PY@bf{\PY@ff{#1}}}}}}}
+\def\PY#1#2{\PY@reset\PY@toks#1+\relax+\PY@do{#2}}
+
+\expandafter\def\csname PY@tok@gd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gu\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.50,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@gt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.27,0.87}{##1}}}
+\expandafter\def\csname PY@tok@gs\endcsname{\let\PY@bf=\textbf}
+\expandafter\def\csname PY@tok@gr\endcsname{\def\PY@tc##1{\textcolor[rgb]{1.00,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@cm\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@vg\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@m\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@go\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.53,0.53}{##1}}}
+\expandafter\def\csname PY@tok@ge\endcsname{\let\PY@it=\textit}
+\expandafter\def\csname PY@tok@vc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@il\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@cs\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.74,0.48,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gh\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@ni\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.60,0.60,0.60}{##1}}}
+\expandafter\def\csname PY@tok@nl\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@no\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@na\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.49,0.56,0.16}{##1}}}
+\expandafter\def\csname PY@tok@nb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@ne\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.82,0.25,0.23}{##1}}}
+\expandafter\def\csname PY@tok@nf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@si\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@s2\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@vi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@nt\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nv\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@s1\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sx\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@bp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@c1\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@kc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@c\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@mf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@err\endcsname{\def\PY@bc##1{\setlength{\fboxsep}{0pt}\fcolorbox[rgb]{1.00,0.00,0.00}{1,1,1}{\strut ##1}}}
+\expandafter\def\csname PY@tok@kd\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@ss\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@sr\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@mo\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@kn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@mi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@gp\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@o\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@kr\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@s\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@kp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@w\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.73,0.73}{##1}}}
+\expandafter\def\csname PY@tok@kt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.69,0.00,0.25}{##1}}}
+\expandafter\def\csname PY@tok@ow\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@sb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@k\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@se\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sd\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+
+\def\PYZbs{\char`\\}
+\def\PYZus{\char`\_}
+\def\PYZob{\char`\{}
+\def\PYZcb{\char`\}}
+\def\PYZca{\char`\^}
+\def\PYZam{\char`\&}
+\def\PYZlt{\char`\<}
+\def\PYZgt{\char`\>}
+\def\PYZsh{\char`\#}
+\def\PYZpc{\char`\%}
+\def\PYZdl{\char`\$}
+\def\PYZhy{\char`\-}
+\def\PYZsq{\char`\'}
+\def\PYZdq{\char`\"}
+\def\PYZti{\char`\~}
+% for compatibility with earlier versions
+\def\PYZat{@}
+\def\PYZlb{[}
+\def\PYZrb{]}
+\makeatother
+
+
+    %Set pygments styles if needed...
+    
+        \definecolor{nbframe-border}{rgb}{0.867,0.867,0.867}
+        \definecolor{nbframe-bg}{rgb}{0.969,0.969,0.969}
+        \definecolor{nbframe-in-prompt}{rgb}{0.0,0.0,0.502}
+        \definecolor{nbframe-out-prompt}{rgb}{0.545,0.0,0.0}
+
+        \newenvironment{ColorVerbatim}
+        {\begin{mdframed}[%
+            roundcorner=1.0pt, %
+            backgroundcolor=nbframe-bg, %
+            userdefinedwidth=1\linewidth, %
+            leftmargin=0.1\linewidth, %
+            innerleftmargin=0pt, %
+            innerrightmargin=0pt, %
+            linecolor=nbframe-border, %
+            linewidth=1pt, %
+            usetwoside=false, %
+            everyline=true, %
+            innerlinewidth=3pt, %
+            innerlinecolor=nbframe-bg, %
+            middlelinewidth=1pt, %
+            middlelinecolor=nbframe-bg, %
+            outerlinewidth=0.5pt, %
+            outerlinecolor=nbframe-border, %
+            needspace=0pt
+        ]}
+        {\end{mdframed}}
+        
+        \newenvironment{InvisibleVerbatim}
+        {\begin{mdframed}[leftmargin=0.1\linewidth,innerleftmargin=3pt,innerrightmargin=3pt, userdefinedwidth=1\linewidth, linewidth=0pt, linecolor=white, usetwoside=false]}
+        {\end{mdframed}}
+
+        \renewenvironment{Verbatim}[1][\unskip]
+        {\begin{alltt}\smaller}
+        {\end{alltt}}
+    
+
+    % Help prevent overflowing lines due to urls and other hard-to-break 
+    % entities.  This doesn't catch everything...
+    \sloppy
+
+    % Document level variables
+    \title{NonlinearDiffusionEquation }
+    \date{December 2, 2013}
+    \release{}
+    \author{Milad H. Mobarhan}
+    \renewcommand{\releasename}{}
+
+    % TODO: Add option for the user to specify a logo for his/her export.
+    \newcommand{\sphinxlogo}{}
+
+    % Make the index page of the document.
+    \makeindex
+
+    % Import sphinx document type specifics.
+     
+
+
+% Body
+
+    % Start of the document
+    \begin{document}
+
+        
+            \maketitle
+        
+
+        
+
+
+        
+        \section{Project 3: Nonlinear diffusion equation}
+
+\emph{Summary.} The goal of this project is to discuss various numerical
+aspects of a nonlinear diffusion model.\begin{center}\rule{3in}{0.4pt}\end{center}
+
+\subsection{Mathematical problem}
+
+We look at the PDE problem
+
+\begin{align*}
+\varrho u_t &= \nabla\cdot (\alpha (u)\nabla u) + f(\pmb{x}, t),\quad &t >0\\
+u(\pmb{x},0) &= I(\pmb{x}),\quad &\pmb{x}\in\Omega\\
+\alpha (u(\pmb{x},t))\frac{\partial}{\partial n} u(\pmb{x}, t) &= 0,\quad &\pmb{x}\in\partial\Omega_N
+\end{align*}
+
+The coefficiet $\varrho$ is constant and $\alpha (u)$ is a known
+function of $u$.\begin{center}\rule{3in}{0.4pt}\end{center}
+
+\subsection{Discretization in time}
+
+First we need a mesh in time, here taken as uniform with mesh points
+$t_n=n \Delta t$, $n=0,1,…,N_t$. A Backward Euler scheme consists of
+sampling at $t_n$ and approximating the time derivative by a backward
+difference
+
+\[[D_t^- u]^n\approx (u^{n}-u^{n-1})/\Delta t.\]
+
+This approximation turns our PDE into a differential equation that is
+discrete in time, but still continuous in space. With a finite
+difference operator notation we can write the time-discrete problem as
+
+\[
+[D_t^- \varrho u = \nabla\cdot (\alpha (u)\nabla u) + f(\boldsymbol{x}, t)]^n
+{\thinspace .}
+\]
+
+which gives the nonlinear time-discrete PDEs
+
+\[
+u^{n} - \frac{\Delta t}{\varrho} \left[ \nabla\cdot (\alpha (u)\nabla u^n) + f(\boldsymbol{x}, t_{n})\right] = {u}^{n-1}
+\]
+
+or with $u^n = u$ and $u^{n-1} = u_1$:
+
+\[
+u - \frac{\Delta t}{\varrho}\nabla\cdot({\alpha}(u^n)\nabla u) -\frac{\Delta t}{\varrho} f(\boldsymbol{x}, t_{n}) = u_1{\thinspace .}
+\]
+
+From the last equation we can define the residual:
+
+\[
+R = u - \frac{\Delta t}{\varrho}\nabla\cdot({\alpha}(u)\nabla u) -\frac{\Delta t}{\varrho} f(\boldsymbol{x}, t_{n}) - u_1{\thinspace .}
+\]\begin{center}\rule{3in}{0.4pt}\end{center}
+
+\subsection{The variational form}The least-squares principle is equivalent to demanding the error to be
+orthogonal to the space $V$ when approximating a function $f$ by
+$u \in V$. With a differential equation we do not know the true error so
+we must instead require the residual $R$ to be orthogonal to $V$. This
+idea implies seeking $\left\{ {c}_i \right\}_{i\in{\mathcal{I}_s}}$ such
+that
+
+\[
+(R,v)=0,\quad \forall v\in V{\thinspace .}
+\]
+
+This statement is equivalent to $R$ being orthogonal to the $N+1$ basis
+functions only:
+
+\[
+(R,{\psi}_i)=0,\quad i\in{\mathcal{I}_s},
+\]
+
+resulting in $N+1$ equations for determining
+$\left\{ {c}_i \right\}_{i\in{\mathcal{I}_s}}$. The variational form for
+our specific case is given by
+
+\begin{align*}
+\int_\Omega (u{\psi}_i - \frac{\Delta t}{\varrho}\nabla\cdot({\alpha}(u^n)\nabla u) {\psi}_i  - \frac{\Delta t}{\varrho} f(\boldsymbol{x}, t_{n}){\psi}_i - u_1{\psi}_i){\, \mathrm{d}x} &= 0\\
+\int_\Omega (u{\psi}_i - \frac{\Delta t}{\varrho} \left[
+-\int_{\Omega}{\alpha(u)}\nabla u\cdot\nabla{\psi}_i{\, \mathrm{d}x} +
+\int_{\partial\Omega}{\alpha(u)}\frac{\partial u}{\partial n}{\psi}_i {\, \mathrm{d}x} \right]
+- \frac{\Delta t}{\varrho} f(\boldsymbol{x}, t_{n}){\psi}_i - u_1{\psi}_i){\, \mathrm{d}x} &= 0\\
+\int_\Omega (u{\psi}_i + \frac{\Delta t}{\varrho}{\alpha}(u)\nabla u\cdot\nabla {\psi}_i  - \frac{\Delta t}{\varrho} f(\boldsymbol{x}, t_{n}){\psi}_i - u_1{\psi}_i){\, \mathrm{d}x} &= 0
+\end{align*}
+
+or more compactly
+
+\[
+(u,{\psi}_i) + \frac{\Delta t}{\varrho} ({\alpha}\nabla u,\nabla{\psi}_i)
+= (u_1{\psi}_i) + \frac{\Delta t}{\varrho} (f^n,{\psi}_i)
+\]
+
+\subsubsection{Initial condition}
+
+The variational form for the initial condition is found by expanding
+
+\[
+u(\pmb{x},0) = \sum_j c_j^0 \psi_j(\pmb{x}) = I(\pmb{x})
+\]
+
+The Galerkin method implies
+
+\[
+\left(\sum_j c_j^0 \psi_j(\pmb{x}) - I(\pmb{x}),{\psi}_i \right)=0,\quad i\in{\mathcal{I}_s},
+\]
+
+or
+
+\[
+\sum_j (\psi_j, {\psi}_i) c_j^0 =  (I,{\psi}_i)
+\]\begin{center}\rule{3in}{0.4pt}\end{center}
+
+\subsection{Picard iteration method at the PDE level}
+
+Our aim is to discretize the problem in time and then present techniques
+for linearizing the time-discrete PDE problem ``at the PDE level'' such
+that we transform the nonlinear stationary PDE problems at each time
+level into a sequence of linear PDE problems, which can be solved using
+any method for linear PDEs. In our case we have
+
+\[
+u = \frac{\Delta t}{\varrho}\nabla\cdot({\alpha}(u)\nabla u) +\frac{\Delta t}{\varrho} f(\boldsymbol{x}, t_{n}) + u_1
+\]
+
+which is nonlinear beacuse of the dependency on $u$ in the variable
+coefficient $\alpha$. Picard iteration needs a linearization where we
+use the most recent approximation $u_-$ to $u$ in $\alpha$:
+
+\[
+u = -\frac{\Delta t}{\varrho}\nabla\cdot({\alpha}(u_-)\nabla u) +\frac{\Delta t}{\varrho} f(\boldsymbol{x}, t_{n}) + u_1
+\]
+
+In variational form is given by
+
+\[
+(u,{\psi}_i) + \frac{\Delta t}{\varrho} ({\alpha(u_-)}\nabla u,\nabla{\psi}_i)
+= (u_1{\psi}_i) + \frac{\Delta t}{\varrho} (f^n,{\psi}_i)
+\]\begin{center}\rule{3in}{0.4pt}\end{center}
+
+\subsection{Convergence test}
+
+The first verification of the FEniCS implementation may assmue
+$\alpha (u)=1$, $f=0$, $\Omega = [0,1]\times [0,1]$, P1 elements, and
+$I(x,y)=\cos(\pi x)$. The exact solution is then
+$u(x,y,t)=e^{-\pi^2 t}\cos (\pi x)$. The error in space is then
+${\cal O}(\Delta x^2) + {\cal O}(\Delta y^2)$, while the error in time
+is ${\cal O}(\Delta t^p)$, with $p=1$ for the Backward Euler scheme and
+$p=2$ for the Crank-Nicolson or the 2-step backward schemes. We set
+$h=\Delta t^p = \Delta x^2$ and perform a convergence rate study as $h$
+is decreased, using Backward Euler scheme:
+
+\begin{verbatim}
+h =  0.1       E =  0.000497030720246  r =  1.22455181028
+h =  0.05      E =  0.000212694571666  r =  1.66702631777
+h =  0.025     E =  6.69778929328e-05  r =  1.60581512224
+h =  0.0125    E =  2.20055871886e-05  r =  1.09776873673
+h =  0.00625   E =  1.02818589919e-05  r =  1.03661750021
+h =  0.003125  E =  5.01208793551e-06  r =  1.0386373625
+\end{verbatim}
+
+where $r = E/h$, which is approximately constant, as expected.\begin{center}\rule{3in}{0.4pt}\end{center}
+
+\subsection{Manufactored solution}
+
+To get an indication whether the implementation of the nonlinear
+diffusion PDE is correct or not, we can use the method of manufactured
+solutions. Say we restrict the problem to one space dimension,
+$\Omega=[0,1]$, and choose
+
+\[
+u(x,t) = t\int_0^x q(1-q)dq = tx^2\left(\frac{1}{2} - \frac{x}{3}\right)
+\]
+
+and $\alpha(u) = 1+u^2$. The following sympy session computes an
+$f(x,t)$ such that the above $u$ is a solution of the PDE problem:
+
+    % Make sure that atleast 4 lines are below the HR
+    \needspace{4\baselineskip}
+
+    
+        \vspace{6pt}
+        \makebox[0.1\linewidth]{\smaller\hfill\tt\color{nbframe-in-prompt}In\hspace{4pt}{[}36{]}:\hspace{4pt}}\\*
+        \vspace{-2.65\baselineskip}
+        \begin{ColorVerbatim}
+            \vspace{-0.7\baselineskip}
+            \begin{Verbatim}[commandchars=\\\{\}]
+\PY{k+kn}{from} \PY{n+nn}{sympy} \PY{k+kn}{import} \PY{o}{*}
+
+\PY{k}{def} \PY{n+nf}{a}\PY{p}{(}\PY{n}{u}\PY{p}{)}\PY{p}{:}
+    \PY{k}{return} \PY{l+m+mi}{1} \PY{o}{+} \PY{n}{u}\PY{o}{*}\PY{o}{*}\PY{l+m+mi}{2}
+
+\PY{k}{def} \PY{n+nf}{u\PYZus{}simple}\PY{p}{(}\PY{n}{x}\PY{p}{,} \PY{n}{t}\PY{p}{)}\PY{p}{:}
+    \PY{k}{return} \PY{n}{x}\PY{o}{*}\PY{o}{*}\PY{l+m+mi}{2}\PY{o}{*}\PY{p}{(}\PY{n}{Rational}\PY{p}{(}\PY{l+m+mi}{1}\PY{p}{,}\PY{l+m+mi}{2}\PY{p}{)} \PY{o}{\PYZhy{}} \PY{n}{x}\PY{o}{/}\PY{l+m+mi}{3}\PY{p}{)}\PY{o}{*}\PY{n}{t}
+
+\PY{n}{x}\PY{p}{,} \PY{n}{t}\PY{p}{,} \PY{n}{p}\PY{p}{,} \PY{n}{dt} \PY{o}{=} \PY{n}{symbols}\PY{p}{(}\PY{l+s}{\PYZsq{}}\PY{l+s}{x[0] t p dt}\PY{l+s}{\PYZsq{}}\PY{p}{)}
+\PY{k}{for} \PY{n}{x\PYZus{}point} \PY{o+ow}{in} \PY{l+m+mi}{0}\PY{p}{,} \PY{l+m+mi}{1}\PY{p}{:}
+     \PY{k}{print} \PY{l+s}{\PYZsq{}}\PY{l+s}{u\PYZus{}x(}\PY{l+s+si}{\PYZpc{}s}\PY{l+s}{,t):}\PY{l+s}{\PYZsq{}} \PY{o}{\PYZpc{}} \PY{n}{x\PYZus{}point}\PY{p}{,}
+     \PY{k}{print} \PY{n}{diff}\PY{p}{(}\PY{n}{u\PYZus{}simple}\PY{p}{(}\PY{n}{x}\PY{p}{,} \PY{n}{t}\PY{p}{)}\PY{p}{,} \PY{n}{x}\PY{p}{)}\PY{o}{.}\PY{n}{subs}\PY{p}{(}\PY{n}{x}\PY{p}{,} \PY{n}{x\PYZus{}point}\PY{p}{)}\PY{o}{.}\PY{n}{simplify}\PY{p}{(}\PY{p}{)}
+
+\PY{k}{print} \PY{l+s}{\PYZsq{}}\PY{l+s}{Initial condition:}\PY{l+s}{\PYZsq{}}\PY{p}{,} \PY{n}{u\PYZus{}simple}\PY{p}{(}\PY{n}{x}\PY{p}{,} \PY{l+m+mi}{0}\PY{p}{)}
+
+\PY{n}{u} \PY{o}{=} \PY{n}{u\PYZus{}simple}\PY{p}{(}\PY{n}{x}\PY{p}{,} \PY{n}{t}\PY{p}{)}
+\PY{n}{f} \PY{o}{=} \PY{n}{p}\PY{o}{*}\PY{n}{diff}\PY{p}{(}\PY{n}{u}\PY{p}{,} \PY{n}{t}\PY{p}{)} \PY{o}{\PYZhy{}} \PY{n}{diff}\PY{p}{(}\PY{n}{a}\PY{p}{(}\PY{n}{u}\PY{p}{)}\PY{o}{*}\PY{n}{diff}\PY{p}{(}\PY{n}{u}\PY{p}{,} \PY{n}{x}\PY{p}{)}\PY{p}{,} \PY{n}{x}\PY{p}{)}
+\PY{k}{print} \PY{n}{ccode}\PY{p}{(}\PY{n}{f}\PY{o}{.}\PY{n}{simplify}\PY{p}{(}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+            
+                \vspace{-0.2\baselineskip}
+            
+        \end{ColorVerbatim}
+    
+
+    
+
+        % If the first block is an image, minipage the image.  Else
+        % request a certain amount of space for the input text.
+        \needspace{4\baselineskip}
+        
+        
+
+            % Add document contents.
+            
+                \begin{InvisibleVerbatim}
+                \vspace{-0.5\baselineskip}
+\begin{alltt}u\_x(0,t): 0
+u\_x(1,t): 0
+Initial condition: 0
+-p*pow(x[0], 3)/3 + p*pow(x[0], 2)/2 + 8*pow(t, 3)*pow(x[0], 7)/9 -
+28*pow(t, 3)*pow(x[0], 6)/9 + 7*pow(t, 3)*pow(x[0], 5)/2 - 5*pow(t,
+3)*pow(x[0], 4)/4 + 2*t*x[0] - t
+\end{alltt}
+
+            \end{InvisibleVerbatim}
+            
+        
+    
+We get the following results for different final times:
+
+\begin{verbatim}
+T =  0.1  E =  3.7822919294e-08
+T =  0.5  E =  1.86763505521e-06
+T =  1.0  E =  9.02389336352e-06
+T =  2.0  E =  4.29791921834e-05
+T =  3.0  E =  0.000131418978921
+\end{verbatim}
+
+For much higher values of $T$, the error become more significant, which
+is due to the error in the single Picard iteration.\begin{center}\rule{3in}{0.4pt}\end{center}
+
+\subsection{Sources of numerical errors}
+
+\begin{itemize}
+\item
+  Truncation error from approximating the function with piecewise linear
+  elements.
+\item
+  Error due to a single Picard iteration
+\item
+  Time discretisation (not explicitly due to the FEniCS)
+\end{itemize}
+        
+
+        \renewcommand{\indexname}{Index}
+        \printindex
+
+    % End of document
+    \end{document}
+
+
