@@ -1,0 +1,8 @@
+Veldig bra prosjekt!
+
+f: ta med numerical integration error også.
+
+Ellers bra at du ser at en single Picard iterasjon gir problemer med
+MMS på den ikke-lineære PDEen.
+
+Hans Petter
